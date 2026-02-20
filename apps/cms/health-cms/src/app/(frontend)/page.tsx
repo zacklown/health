@@ -12,7 +12,7 @@ export default async function HomePage() {
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
-
+  const label = process.env.NEXT_PUBLIC_PORTAL_LABEL ?? 'CMS';
   const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
 
   return (
@@ -27,8 +27,8 @@ export default async function HomePage() {
             width={65}
           />
         </picture>
-        {!user && <h1>Welcome to Health.</h1>}
-        {user && <h1>Welcome back, {user.email}</h1>}
+        {!user && (<h1>Welcome to Health CMS.<br />This is the {label} CMS!</h1>)}
+        {user && (<h1>Welcome back, {user.email}.<br /><br />This is the {label} CMS!</h1>)}
         <div className="links">
           <a
             className="admin"
