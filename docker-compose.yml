@@ -2,17 +2,24 @@ services:
   cms:
     build: .
     working_dir: /app/apps/cms/health-cms
-    command: bash -lc "pnpm start"
+    command: bash -lc "pnpm install --frozen-lockfile --prod=false --ignore-workspace && pnpm run build && pnpm run start"
     restart: always
     ports:
       - "3000:3000"
     env_file:
-      - ./apps/cms/health-cms/.env.production
+      - ./apps/cms/health-cms/.env.production.local
+    networks:
+      - default
+      - health-db
 
   astro:
     build: .
     working_dir: /app/apps/frontend
-    command: bash -lc "pnpm preview --host 0.0.0.0 --port 4321"
+    command: bash -lc "pnpm install --frozen-lockfile --ignore-workspace && pnpm build && pnpm preview --host 0.0.0.0 --port 4321"
     restart: always
     ports:
       - "4321:4321"
+
+networks:
+  health-db:
+    external: true
