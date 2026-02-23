@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+.pnpm-store
+dist
+build
+.next
+out
+.astro
+.cache
+.git
+*.log
+.env
+.env.*

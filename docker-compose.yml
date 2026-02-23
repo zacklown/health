@@ -1,0 +1,18 @@
+services:
+  cms:
+    build: .
+    working_dir: /app/apps/cms/health-cms
+    command: bash -lc "pnpm start"
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apps/cms/health-cms/.env.production
+
+  astro:
+    build: .
+    working_dir: /app/apps/frontend
+    command: bash -lc "pnpm preview --host 0.0.0.0 --port 4321"
+    restart: always
+    ports:
+      - "4321:4321"
