@@ -34,6 +34,7 @@ services:
       - frontend_pnpm_store:/pnpm-store
     environment:
       PNPM_STORE_DIR: /pnpm-store
+      PUBLIC_CMS_URL: http://cms:3000
     ports:
       - "4321:4321"
     command: >

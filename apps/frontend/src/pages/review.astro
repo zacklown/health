@@ -1,0 +1,119 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+type CmsPage = {
+	title: string;
+	slug: string;
+	category?: string;
+	summary?: string;
+	body?: string;
+	updatedAt?: string;
+	createdAt?: string;
+};
+
+const slug = Astro.url.searchParams.get('slug');
+const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
+	Boolean
+) as string[];
+
+let page: CmsPage | null = null;
+
+if (slug) {
+	for (const baseUrl of cmsBaseUrls) {
+		try {
+			const res = await fetch(
+				`${baseUrl}/api/pages?limit=1&where[slug][equals]=${encodeURIComponent(slug)}`
+			);
+			if (!res.ok) continue;
+			const data = await res.json();
+			if (Array.isArray(data?.docs) && data.docs.length > 0) {
+				page = data.docs[0] as CmsPage;
+				break;
+			}
+		} catch (_) {
+			// Try next base URL.
+		}
+	}
+}
+---
+
+<Layout title={`${page?.title || 'Review'} | Health Atlas`} description={page?.summary || 'Health review page'}>
+	<main class="article-shell">
+		<a class="back-link" href="/">← Back to Home</a>
+		{!page && (
+			<article>
+				<h1>Article not found</h1>
+				<p>That review does not exist yet or was unpublished.</p>
+			</article>
+		)}
+		{page && (
+			<article>
+				<p class="meta">
+					<span>{page.category || 'General'}</span>
+					<span>{new Date(page.updatedAt || page.createdAt || Date.now()).toLocaleDateString()}</span>
+				</p>
+				<h1>{page.title}</h1>
+				{page.summary && <p class="summary">{page.summary}</p>}
+				<div class="body">
+					{(page.body || '').split('\n').map((line) => (
+						<p>{line}</p>
+					))}
+				</div>
+			</article>
+		)}
+	</main>
+</Layout>
+
+<style>
+	.article-shell {
+		max-width: 820px;
+		margin: 0 auto;
+		padding: 2rem 1rem 3rem;
+	}
+
+	.back-link {
+		text-decoration: none;
+		color: #1f8a70;
+		font-weight: 600;
+	}
+
+	article {
+		margin-top: 1rem;
+		border: 1px solid #e6ddc8;
+		background: #fffdf8;
+		border-radius: 1rem;
+		padding: 1.3rem;
+	}
+
+	.meta {
+		display: flex;
+		gap: 0.7rem;
+		font-size: 0.8rem;
+		color: #6b7280;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+	}
+
+	h1 {
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		margin: 0.5rem 0;
+		font-size: clamp(1.8rem, 4vw, 2.5rem);
+	}
+
+	.summary {
+		margin: 0;
+		color: #475569;
+		font-size: 1.05rem;
+		line-height: 1.45;
+	}
+
+	.body {
+		margin-top: 1rem;
+		color: #1f2937;
+		line-height: 1.65;
+	}
+
+	.body p {
+		margin: 0 0 0.9rem;
+	}
+</style>
