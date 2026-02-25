@@ -8,9 +8,6 @@ services:
       - "3000:3000"
     env_file:
       - ./apps/cms/health-cms/.env.production.local
-    networks:
-      - default
-      - health-db
 
   astro:
     build: .
@@ -19,7 +16,3 @@ services:
     restart: always
     ports:
       - "4321:4321"
-
-networks:
-  health-db:
-    external: true
