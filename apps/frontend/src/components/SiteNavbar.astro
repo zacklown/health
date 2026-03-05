@@ -142,9 +142,37 @@ const defaultNavItems: NavItem[] = [
 	{ type: 'link', label: 'Subscribe', href: '/subscribe', variant: 'button' }
 ];
 
-const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
-	Boolean
-) as string[];
+type CmsResponse = {
+	doc?: {
+		announcement?: unknown;
+		topAnnouncement?: unknown;
+		banner?: unknown;
+		navItems?: unknown;
+		navigation?: unknown;
+		nav?: unknown;
+		items?: unknown;
+		links?: unknown;
+		defaultLinks?: unknown;
+	} | null;
+	data?: Record<string, unknown>[] | Record<string, unknown> | null;
+	docs?: Record<string, unknown>[];
+	announcement?: unknown;
+	navItems?: unknown;
+};
+
+function normalizeCmsSourceUrl(url: unknown): string | null {
+	if (typeof url !== 'string') return null;
+	const trimmed = url.trim();
+	return trimmed ? trimmed.replace(/\/+$/, '') : null;
+}
+
+const cmsBaseUrls = [
+	normalizeCmsSourceUrl(import.meta.env.PUBLIC_CMS_URL),
+	'http://cms:3000',
+	'http://localhost:3000',
+]
+	.map((url) => normalizeCmsSourceUrl(url))
+	.filter((url): url is string => Boolean(url));
 
 function normalizeAnnouncement(raw: any) {
 	if (!raw || typeof raw !== 'object') return null;
@@ -262,25 +290,25 @@ function getDropdownPanelStyle(item: NavItem & { columns: NavColumn[] }) {
 }
 
 async function loadNavConfig() {
-	const endpoints = [
+	const payloadEndpoints = [
+		'/api/globals/site-navigation?depth=2',
 		'/api/site-navigation?depth=2',
 		'/api/site-settings?depth=2',
-		'/api/globals/site-navigation?depth=2',
 		'/api/globals/site-settings?depth=2',
 		'/api/pages?limit=1&where[slug][equals]=site-navigation',
-		'/api/pages?limit=1&where[slug][equals]=site-config'
+		'/api/pages?limit=1&where[slug][equals]=site-config',
 	];
 
 	for (const baseUrl of cmsBaseUrls) {
-		for (const endpoint of endpoints) {
+		for (const endpoint of payloadEndpoints) {
 			try {
 				const res = await fetch(`${baseUrl}${endpoint}`);
 				if (!res.ok) continue;
-				const data = await res.json();
+				const data = (await res.json()) as CmsResponse;
 				const parsed = parseCmsNavPayload(data);
 				if (parsed) return parsed;
-			} catch (_) {
-				// continue to next endpoint/base.
+			} catch {
+				// intentionally ignore and try next endpoint/base url
 			}
 		}
 	}
