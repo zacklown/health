@@ -1,4 +1,6 @@
 ---
+import SiteNavbar from '../components/SiteNavbar.astro';
+
 interface Props {
 	title?: string;
 	description?: string;
@@ -22,6 +24,7 @@ const {
 		<title>{title}</title>
 	</head>
 	<body>
+		<SiteNavbar />
 		<slot />
 	</body>
 </html>
