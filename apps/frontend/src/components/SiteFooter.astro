@@ -1,0 +1,179 @@
+---
+import metadataLogo from '../assets/MetadataLogo.png';
+
+const metadataLogoUrl = typeof metadataLogo === 'string' ? metadataLogo : metadataLogo.src;
+
+const year = new Date().getFullYear();
+
+const footerSections = [
+	{
+		title: 'Explore',
+		links: [
+			{ label: 'Home', href: '/' },
+			{ label: 'Foods', href: '/#foods' },
+			{ label: 'Supplements', href: '/#supplements' },
+			{ label: 'Diets', href: '/#diets' }
+		]
+	},
+	{
+		title: 'Resources',
+		links: [
+			{ label: 'Study workflow', href: '#' },
+			{ label: 'Grading guide', href: '#' },
+			{ label: 'Review templates', href: '#' },
+			{ label: 'Research archive', href: '/review' }
+		]
+	},
+	{
+		title: 'Company',
+		links: [
+			{ label: 'About', href: '/about' },
+			{ label: 'Contact', href: '/contact' },
+			{ label: 'Terms', href: '/terms' },
+			{ label: 'Privacy', href: '/review/privacyPolicy' }
+		]
+	}
+];
+---
+
+<footer class="wf-footer">
+	<div class="wf-footer-shell">
+		<div class="wf-footer-brand">
+			<a href="/" aria-label="Metadata home">
+				<img class="wf-footer-logo" src={metadataLogoUrl} alt="Metadata logo" />
+				<span class="wf-footer-brand-text">Metadata</span>
+			</a>
+			<p>
+				A practical health reference for evidence-first decisions about nutrition, sleep, and daily behavior.
+			</p>
+		</div>
+		<div class="wf-footer-columns">
+			{footerSections.map((section) => (
+				<div class="wf-footer-col">
+					<p>{section.title}</p>
+					<ul>
+						{section.links.map((link) => (
+							<li><a href={link.href}>{link.label}</a></li>
+						))}
+					</ul>
+				</div>
+			))}
+		</div>
+	</div>
+	<div class="wf-footer-bottom">
+		<p>© {year} Metadata. All rights reserved.</p>
+		<p>
+			Made with notes, evidence, and strong coffee.
+		</p>
+	</div>
+</footer>
+
+<style>
+	.wf-footer {
+		margin-top: 3rem;
+		border-top: 1px solid #d6dae2;
+		background: #0f172a;
+		color: #e5edf5;
+	}
+
+	.wf-footer-shell {
+		width: 100%;
+		max-width: 1100px;
+		margin: 0 auto;
+		padding: 1.6rem 1rem 1.2rem;
+		display: grid;
+		grid-template-columns: 1.2fr 1.8fr;
+		gap: 1.4rem;
+	}
+
+	.wf-footer-brand a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		color: #f4f9ff;
+		text-decoration: none;
+		font-weight: 700;
+	}
+
+	.wf-footer-brand p {
+		margin: 0.7rem 0 0;
+		max-width: 39ch;
+		color: #a7b8ca;
+		line-height: 1.45;
+		font-size: 0.92rem;
+	}
+
+	.wf-footer-logo {
+		width: 118px;
+		height: 28px;
+		display: block;
+		filter: brightness(0) invert(1);
+	}
+
+	.wf-footer-brand-text {
+		font-size: 0.98rem;
+		letter-spacing: 0.02em;
+	}
+
+	.wf-footer-columns {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.wf-footer-col p {
+		margin: 0 0 0.45rem;
+		color: #d4e2f2;
+		font-size: 0.76rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.wf-footer-col ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 0.4rem;
+	}
+
+	.wf-footer-col a {
+		color: #c9d9eb;
+		font-size: 0.9rem;
+		text-decoration: none;
+	}
+
+	.wf-footer-col a:hover {
+		color: #ffffff;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.wf-footer-bottom {
+		border-top: 1px solid rgba(148, 163, 184, 0.3);
+		padding: 0.85rem 1rem 1.1rem;
+		display: flex;
+		justify-content: space-between;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+		max-width: 1100px;
+		margin: 0 auto;
+		color: #93a4ba;
+		font-size: 0.86rem;
+	}
+
+	@media (max-width: 860px) {
+		.wf-footer-shell {
+			grid-template-columns: 1fr;
+		}
+
+		.wf-footer-columns {
+			grid-template-columns: 1fr;
+		}
+
+		.wf-footer-bottom {
+			flex-direction: column;
+		}
+	}
+</style>

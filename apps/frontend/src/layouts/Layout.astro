@@ -1,5 +1,11 @@
 ---
+import SiteFooter from '../components/SiteFooter.astro';
 import SiteNavbar from '../components/SiteNavbar.astro';
+import metaDataIconPng from '../assets/MetaDataIcon.png';
+import metaDataIconIco from '../assets/MetaDataIcon.ico';
+
+const metaDataIconPngUrl = typeof metaDataIconPng === 'string' ? metaDataIconPng : metaDataIconPng.src;
+const metaDataIconIcoUrl = typeof metaDataIconIco === 'string' ? metaDataIconIco : metaDataIconIco.src;
 
 interface Props {
 	title?: string;
@@ -17,8 +23,9 @@ const {
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="icon" type="image/png" href={metaDataIconPngUrl} />
+		<link rel="shortcut icon" type="image/x-icon" href={metaDataIconIcoUrl} />
+		<link rel="icon" type="image/x-icon" href={metaDataIconIcoUrl} />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
 		<title>{title}</title>
@@ -26,6 +33,7 @@ const {
 	<body>
 		<SiteNavbar />
 		<slot />
+		<SiteFooter />
 	</body>
 </html>
 

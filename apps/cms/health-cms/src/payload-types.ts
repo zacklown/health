@@ -89,8 +89,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-navigation': SiteNavigation;
+  };
+  globalsSelect: {
+    'site-navigation': SiteNavigationSelect<false> | SiteNavigationSelect<true>;
+  };
   locale: null;
   user: User;
   jobs: {
@@ -355,6 +359,87 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-navigation".
+ */
+export interface SiteNavigation {
+  id: number;
+  announcement: {
+    enabled: boolean;
+    text: string;
+    /**
+     * Optional link destination for announcement bar. Use # for no navigation.
+     */
+    href?: string | null;
+  };
+  navItems: {
+    type: 'link' | 'dropdown';
+    label: string;
+    /**
+     * Top-level link destination.
+     */
+    href: string;
+    /**
+     * Only used for single links (for example, subscribe button).
+     */
+    variant?: ('default' | 'button') | null;
+    columns?:
+      | {
+          title: string;
+          links?:
+            | {
+                label: string;
+                href: string;
+                id?: string | null;
+              }[]
+            | null;
+          id?: string | null;
+        }[]
+      | null;
+    id?: string | null;
+  }[];
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-navigation_select".
+ */
+export interface SiteNavigationSelect<T extends boolean = true> {
+  announcement?:
+    | T
+    | {
+        enabled?: T;
+        text?: T;
+        href?: T;
+      };
+  navItems?:
+    | T
+    | {
+        type?: T;
+        label?: T;
+        href?: T;
+        variant?: T;
+        columns?:
+          | T
+          | {
+              title?: T;
+              links?:
+                | T
+                | {
+                    label?: T;
+                    href?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

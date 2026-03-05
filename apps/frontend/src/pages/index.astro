@@ -1,5 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import heroBackground from '../assets/Hero background.jpg';
+
+const heroBackgroundUrl = typeof heroBackground === 'string' ? heroBackground : heroBackground.src;
 
 type CmsItem = {
 	title: string;
@@ -64,10 +67,10 @@ const fallbackItems: CmsItem[] = [
 ];
 ---
 
-<Layout title="MetStat" description="Personal health wiki for structured reviews and study notes.">
+<Layout title="Metadata" description="Personal health wiki for structured reviews and study notes.">
 	<div class="page-shell">
 		<main>
-			<section class="hero block">
+		<section class="hero block" style={`--hero-bg: url('${heroBackgroundUrl}')`}>
 				<div class="block-text hero-content">
 					<p class="eyebrow">PERSONAL KNOWLEDGE SYSTEM</p>
 					<h1>One place to review foods, supplements, diets, and studies.</h1>
@@ -221,7 +224,7 @@ const fallbackItems: CmsItem[] = [
 	}
 
 	main {
-		padding-top: 2rem;
+		padding-top: 0;
 		padding-inline: 1rem;
 		display: grid;
 		gap: 1.35rem;
@@ -233,8 +236,15 @@ const fallbackItems: CmsItem[] = [
 		display: flex;
 		align-items: flex-end;
 		padding: clamp(1.2rem, 4vw, 2.4rem);
+		margin-inline: -1rem;
+		width: calc(100% + 2rem);
 		animation: fade-slide 500ms ease both;
 		overflow: hidden;
+	}
+
+	.hero.block {
+		border: 0;
+		background: transparent;
 	}
 
 	.hero::before {
@@ -244,7 +254,7 @@ const fallbackItems: CmsItem[] = [
 		z-index: 0;
 		background-image:
 			linear-gradient(to top, rgba(8, 18, 29, 0.78) 0%, rgba(8, 18, 29, 0.4) 38%, rgba(8, 18, 29, 0.22) 100%),
-			url('/hero-health.jpg');
+			var(--hero-bg);
 		background-size: cover;
 		background-position: center;
 		background-repeat: no-repeat;
