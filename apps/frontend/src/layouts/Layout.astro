@@ -1,7 +1,11 @@
 ---
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteNavbar from '../components/SiteNavbar.astro';
+import metaDataIconPng from '../assets/MetaDataIcon.png';
+import metaDataIconIco from '../assets/MetaDataIcon.ico';
 
+const metaDataIconPngUrl = typeof metaDataIconPng === 'string' ? metaDataIconPng : metaDataIconPng.src;
+const metaDataIconIcoUrl = typeof metaDataIconIco === 'string' ? metaDataIconIco : metaDataIconIco.src;
 
 interface Props {
 	title?: string;

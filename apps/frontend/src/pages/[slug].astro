@@ -47,10 +47,28 @@ function slugifyHeading(text: string): string {
 		.replace(/-+/g, '-');
 }
 
+function renderTermLinks(text: string): string {
+	const bracketSyntaxLinked = text.replace(/\[\[([a-z0-9][a-z0-9-]{0,63})\]\]/gi, (match, rawTag) => {
+		const tag = String(rawTag || '');
+		if (!tag) return match;
+		const slug = tag.toLowerCase();
+		return `<a class="term-link" href="/dictionary#${encodeURIComponent(slug)}">${tag}</a>`;
+	});
+
+	return bracketSyntaxLinked.replace(/(^|[\s(>])#([a-z0-9][a-z0-9-]{0,63})\b/gi, (match, prefix, rawTag) => {
+		const tag = String(rawTag || '');
+		if (!tag) return match;
+		if (/^[0-9a-f]{3}([0-9a-f]{3})?$/i.test(tag)) return match;
+		const slug = tag.toLowerCase();
+		return `${prefix}<a class="term-link" href="/dictionary#${encodeURIComponent(slug)}">${tag}</a>`;
+	});
+}
+
 function renderInlineMarkdown(line: string): string {
 	let output = escapeHtml(line);
 	output = output.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />');
 	output = output.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+	output = renderTermLinks(output);
 	output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 	output = output.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 	output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -427,8 +445,27 @@ const relatedArticles = normalizeRelatedArticles(page);
 		margin: 0 0 0.4rem;
 	}
 
-	.markdown-body a {
-		color: var(--color-accent);
+	.markdown-body a:not(.term-link) {
+		color: #1d4ed8;
+	}
+
+	.markdown-body a:not(.term-link):visited {
+		color: #1e40af;
+	}
+
+	.markdown-body a:not(.term-link):hover {
+		color: #1e3a8a;
+	}
+
+	.markdown-body a.term-link,
+	.markdown-body a.term-link:visited,
+	.markdown-body a.term-link:focus {
+		color: #1a9a43;
+		font-weight: 600;
+	}
+
+	.markdown-body a.term-link:hover {
+		color: #147735;
 	}
 
 	.markdown-body code {

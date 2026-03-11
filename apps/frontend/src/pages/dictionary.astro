@@ -1,0 +1,276 @@
+---
+import Layout from '../layouts/Layout.astro';
+export const prerender = false;
+
+type DictionaryAlias = {
+	value?: string;
+};
+
+type DictionaryEntry = {
+	id?: number;
+	term?: string;
+	slug?: string;
+	definition?: string;
+	fullArticle?: { slug?: string; title?: string } | number | null;
+	aliases?: DictionaryAlias[] | null;
+	updatedAt?: string;
+	createdAt?: string;
+};
+
+const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
+	Boolean
+) as string[];
+
+function normalizeEntries(input: unknown): DictionaryEntry[] {
+	if (!Array.isArray(input)) return [];
+	return input
+		.filter((entry) => entry && typeof entry === 'object')
+		.map((entry) => entry as DictionaryEntry)
+		.filter((entry) => typeof entry.slug === 'string' && typeof entry.term === 'string');
+}
+
+function toHashSlug(input: string): string {
+	return input
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9\s-]/g, '')
+		.replace(/\s+/g, '-')
+		.replace(/-+/g, '-');
+}
+
+async function fetchDictionaryEntries(): Promise<DictionaryEntry[]> {
+	for (const baseUrl of cmsBaseUrls) {
+		try {
+			const params = new URLSearchParams({
+				depth: '1',
+				limit: '500',
+				sort: 'term',
+			});
+			const res = await fetch(`${baseUrl}/api/dictionary-entries?${params.toString()}`);
+			if (!res.ok) continue;
+			const data = await res.json();
+			return normalizeEntries(data?.docs);
+		} catch (_) {
+			// Try next base URL.
+		}
+	}
+	return [];
+}
+
+const entries = await fetchDictionaryEntries();
+---
+
+<Layout title="Dictionary | Health Atlas" description="Dictionary of terms used across the site.">
+	<main class="dictionary-shell">
+		<a class="back-link" href="/">&larr; Back to Home</a>
+		<header class="dictionary-header">
+			<p class="eyebrow">That's a big word for Elmo</p>
+			<h1>Dictionary</h1>
+			<p>A list of relevant terms used in articles</p>
+		</header>
+
+		{entries.length === 0 ? (
+			<section class="empty-state">
+				<h2>No dictionary entries yet. The CMS is probably down.</h2>
+			</section>
+		) : (
+			<section class="entries" aria-label="Dictionary entries">
+				{entries.map((entry) => (
+					<article id={entry.slug} class="entry-card">
+						<header>
+							<h2>{entry.term}</h2>
+							<p class="hash-link">
+								<a href={`#${entry.slug}`}>#{entry.slug}</a>
+							</p>
+						</header>
+						{Array.isArray(entry.aliases) && entry.aliases.length > 0 && (
+							<p class="aliases">
+								Aliases:{' '}
+								{entry.aliases
+									.map((alias) => alias?.value?.trim())
+									.filter(Boolean)
+									.map((alias, index, all) => (
+										<>
+											<code>#{alias}</code>
+											{index < all.length - 1 ? ', ' : ''}
+										</>
+									))}
+							</p>
+						)}
+						{Array.isArray(entry.aliases) &&
+							entry.aliases
+								.map((alias) => toHashSlug(alias?.value || ''))
+								.filter((alias) => alias && alias !== entry.slug)
+								.map((alias) => <span id={alias} class="alias-anchor" aria-hidden="true"></span>)}
+						<p class="definition">{entry.definition}</p>
+						{entry.fullArticle &&
+							typeof entry.fullArticle === 'object' &&
+							entry.fullArticle.slug &&
+							entry.fullArticle.title && (
+								<p class="full-article-link">
+									<a href={`/${encodeURIComponent(entry.fullArticle.slug)}`}>
+										Go to Full Article &rarr;
+									</a>
+								</p>
+							)}
+					</article>
+				))}
+			</section>
+		)}
+	</main>
+</Layout>
+
+<style>
+	.dictionary-shell {
+		width: min(1100px, calc(100vw - 2rem));
+		margin: 0 auto;
+		padding: 2rem 0 3rem;
+	}
+
+	.back-link {
+		text-decoration: none;
+		color: var(--color-accent);
+		font-weight: 600;
+	}
+
+	.dictionary-header {
+		margin-top: 0.9rem;
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		padding: 1.2rem;
+	}
+
+	.eyebrow {
+		margin: 0;
+		font-size: 0.78rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--color-muted);
+	}
+
+	h1 {
+		margin: 0.25rem 0 0.5rem;
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		font-size: clamp(1.9rem, 4vw, 2.5rem);
+		color: var(--color-text);
+	}
+
+	.dictionary-header p {
+		margin: 0;
+		color: var(--color-text);
+		line-height: 1.5;
+	}
+
+	.entries {
+		margin-top: 1rem;
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.entry-card,
+	.empty-state {
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		padding: 1rem;
+	}
+
+	.entry-card header {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	h2 {
+		margin: 0;
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		font-size: 1.4rem;
+		color: var(--color-text);
+		scroll-margin-top: 7rem;
+	}
+
+	.hash-link {
+		margin: 0;
+		font-size: 0.9rem;
+	}
+
+	.hash-link a {
+		color: var(--color-accent);
+		text-decoration: none;
+	}
+
+	.hash-link a:hover {
+		text-decoration: underline;
+	}
+
+	.aliases {
+		margin: 0.65rem 0 0;
+		font-size: 0.9rem;
+		color: var(--color-muted);
+	}
+
+	.aliases code {
+		font-family: Consolas, Monaco, 'Courier New', monospace;
+		font-size: 0.9em;
+		padding: 0.08rem 0.22rem;
+		background: color-mix(in oklab, var(--color-muted) 24%, transparent);
+		color: var(--color-text);
+	}
+
+	.definition {
+		margin: 0.7rem 0 0;
+		color: var(--color-text);
+		line-height: 1.62;
+		white-space: pre-wrap;
+	}
+
+	.full-article-link {
+		margin: 0.85rem 0 0;
+	}
+
+	.full-article-link a {
+		color: var(--color-accent);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.full-article-link a:hover {
+		text-decoration: underline;
+	}
+
+	.alias-anchor {
+		display: block;
+		position: relative;
+		top: -6.8rem;
+		visibility: hidden;
+		height: 0;
+	}
+
+	.empty-state h2 {
+		margin: 0 0 0.35rem;
+		font-size: 1.2rem;
+	}
+
+	.empty-state p {
+		margin: 0;
+		color: var(--color-muted);
+	}
+
+	@media (max-width: 680px) {
+		.dictionary-shell {
+			width: calc(100vw - 1.2rem);
+		}
+
+		.dictionary-header,
+		.entry-card,
+		.empty-state {
+			padding: 0.9rem;
+		}
+
+		.entry-card header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.3rem;
+		}
+	}
+</style>

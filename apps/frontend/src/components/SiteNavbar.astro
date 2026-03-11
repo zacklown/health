@@ -383,9 +383,8 @@ const navItems = cmsNavConfig.items;
 														<a
 															href={linkItem.href}
 															class="site-dropdown__link site-dropdown__link--mobile-safe"
-															style="color: var(--color-text) !important; -webkit-text-fill-color: var(--color-text) !important;"
 														>
-															{linkItem.label}
+															<span class="site-dropdown__link-text">{linkItem.label}</span>
 														</a>
 													</li>
 												))}
@@ -632,8 +631,13 @@ const navItems = cmsNavConfig.items;
 
 	.site-dropdown__link {
 		color: var(--color-text);
-		-webkit-text-fill-color: var(--color-text);
 		text-decoration: none;
+	}
+
+	.site-dropdown__link-text {
+		display: inline;
+		color: inherit;
+		opacity: 1;
 	}
 
 	.site-nav a:hover,
@@ -643,7 +647,6 @@ const navItems = cmsNavConfig.items;
 
 	.site-dropdown__link--mobile-safe {
 		color: var(--color-text) !important;
-		-webkit-text-fill-color: var(--color-text) !important;
 	}
 
 	.site-nav__cta {
@@ -746,7 +749,6 @@ const navItems = cmsNavConfig.items;
 		.site-dropdown.is-open .site-dropdown__panel,
 		.site-dropdown.is-open .site-dropdown__panel * {
 			color: var(--color-text) !important;
-			-webkit-text-fill-color: var(--color-text) !important;
 			text-shadow: none !important;
 		}
 
@@ -762,7 +764,6 @@ const navItems = cmsNavConfig.items;
 		.site-dropdown.is-open .site-dropdown__link {
 			display: block !important;
 			color: var(--color-text) !important;
-			-webkit-text-fill-color: var(--color-text) !important;
 			font-size: 0.87rem !important;
 			line-height: 1.35 !important;
 			background: transparent !important;
@@ -882,18 +883,32 @@ const navItems = cmsNavConfig.items;
 		.site-dropdown.is-open .site-dropdown__panel {
 			background: var(--color-surface) !important;
 			color: var(--color-text) !important;
-			-webkit-text-fill-color: var(--color-text) !important;
 			text-shadow: none !important;
 		}
 
 		.site-dropdown.is-open .site-dropdown__link {
 			display: block !important;
 			color: var(--color-text) !important;
-			-webkit-text-fill-color: var(--color-text) !important;
 			background: transparent !important;
 			text-decoration: none !important;
 			opacity: 1 !important;
 			pointer-events: auto;
+		}
+
+		.site-dropdown.is-open .site-dropdown__link-text {
+			display: inline !important;
+			color: var(--color-text) !important;
+			opacity: 1 !important;
+		}
+
+		.site-dropdown.is-open .site-dropdown__column p,
+		.site-dropdown.is-open .site-dropdown__link,
+		.site-dropdown.is-open .site-dropdown__link-text {
+			color: var(--color-text, #162130) !important;
+			opacity: 1 !important;
+			visibility: visible !important;
+			text-shadow: none !important;
+			-webkit-text-fill-color: unset !important;
 		}
 
 		.site-dropdown.is-open .site-dropdown__link:visited,

@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     pages: Page;
+    'dictionary-entries': DictionaryEntry;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +81,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    'dictionary-entries': DictionaryEntriesSelect<false> | DictionaryEntriesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -208,6 +210,40 @@ export interface Page {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dictionary-entries".
+ */
+export interface DictionaryEntry {
+  id: number;
+  /**
+   * Human-readable dictionary term (for example: Glycemic Index).
+   */
+  term: string;
+  /**
+   * Hashtag-safe slug (for example: glycemic-index). Used by #word links.
+   */
+  slug: string;
+  /**
+   * Main dictionary definition text shown on the Dictionary page.
+   */
+  definition: string;
+  /**
+   * Optional article link shown at the bottom of this dictionary entry as "Go to Full Article ->".
+   */
+  fullArticle?: (number | null) | Page;
+  /**
+   * Optional alternate hashtags that should point to this concept in future updates.
+   */
+  aliases?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -241,6 +277,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pages';
         value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'dictionary-entries';
+        value: number | DictionaryEntry;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -339,6 +379,24 @@ export interface PagesSelect<T extends boolean = true> {
   homeSubject?: T;
   featureImage?: T;
   relatedArticles?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dictionary-entries_select".
+ */
+export interface DictionaryEntriesSelect<T extends boolean = true> {
+  term?: T;
+  slug?: T;
+  definition?: T;
+  fullArticle?: T;
+  aliases?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

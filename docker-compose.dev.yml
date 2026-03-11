@@ -20,7 +20,7 @@ services:
       corepack prepare pnpm@9.15.0 &&
       corepack pnpm config set store-dir /pnpm-store &&
       corepack pnpm install &&
-      corepack pnpm dev --hostname 0.0.0.0 --port 3000
+      corepack pnpm devsafe --hostname 0.0.0.0 --port 3000
       "
     env_file:
       - ./apps/cms/health-cms/.env.development.local
