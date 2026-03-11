@@ -69,7 +69,7 @@ function normalizeHref(raw: unknown): string {
 }
 
 const defaultAnnouncement = {
-	text: 'New: Personal health notes now include study snapshots',
+	text: 'Uh Oh! The website CMS was unreachable. Information shown is default and may be outdated.',
 	href: '#',
 	enabled: true
 };
@@ -167,7 +167,7 @@ function normalizeCmsSourceUrl(url: unknown): string | null {
 }
 
 const cmsBaseUrls = [
-	normalizeCmsSourceUrl(import.meta.env.PUBLIC_CMS_URL),
+	normalizeCmsSourceUrl((import.meta as any).env.PUBLIC_CMS_URL),
 	'http://cms:3000',
 	'http://localhost:3000',
 ]
@@ -188,10 +188,18 @@ function normalizeLinks(rawLinks: any): NavLink[] {
 	return rawLinks
 		.map((item) => {
 			if (!item || typeof item !== 'object') return null;
-			const label = (item.label || item.title || item.text || '').toString().trim();
+			const label =
+				getStringValue(item.label) ||
+				getStringValue(item.title) ||
+				getStringValue(item.text) ||
+				getStringValue(item.name) ||
+				getStringValue(item.heading) ||
+				getStringValue((item.text as Record<string, unknown>)?.value) ||
+				getStringValue((item.label as Record<string, unknown>)?.value) ||
+				'';
 			const href = normalizeHref(item.href ?? item.url ?? item.link);
 			if (!label || !href) return null;
-			return { label, href };
+			return { label: String(label), href };
 		})
 		.filter((item): item is NavLink => Boolean(item));
 }
@@ -216,6 +224,7 @@ function normalizeNavItem(raw: any): NavItem | null {
 	if (!label) return null;
 
 	const itemType = (raw.type || raw.kind || '').toString().toLowerCase();
+	const isButtonType = itemType === 'button';
 	const rawColumns = Array.isArray(raw.columns) ? raw.columns : [];
 	const hasColumns =
 		rawColumns.length > 0 &&
@@ -249,11 +258,11 @@ function normalizeNavItem(raw: any): NavItem | null {
 		type: 'link',
 		label,
 		href,
-		variant: variant ? String(variant) : undefined
+		variant: isButtonType ? 'button' : variant ? String(variant) : undefined
 	};
 }
 
-function normalizeNavItems(rawItems: any): NavItem[] {
+function normalizeNavItems(rawItems: any): NavItem[] { 
 	if (!Array.isArray(rawItems)) return [];
 	return rawItems
 		.map(normalizeNavItem)
@@ -261,7 +270,7 @@ function normalizeNavItems(rawItems: any): NavItem[] {
 		.filter((item) => item.label && item.href);
 }
 
-function parseCmsNavPayload(payload: any): { announcement: typeof defaultAnnouncement; items: NavItem[] } | null {
+function parseCmsNavPayload(payload: any): { announcement: typeof defaultAnnouncement; items: NavItem[] } | null { // Attempts to extract and normalize navigation configuration from various possible CMS response structures
 	if (!payload || typeof payload !== 'object') return null;
 	const doc = payload.doc || payload.data?.[0] || payload.docs?.[0] || payload.data || payload;
 	if (!doc || typeof doc !== 'object') return null;
@@ -278,14 +287,14 @@ function parseCmsNavPayload(payload: any): { announcement: typeof defaultAnnounc
 	};
 }
 
-function getDropdownPanelStyle(item: NavItem & { columns: NavColumn[] }) {
+function getDropdownPanelStyle(item: NavItem & { columns: NavColumn[] }) { //Uses the CMS-provided column structure to calculate optimal dropdown width and height
 	const columns = Math.max(item.columns.length, 1);
 	const maxItemsInColumn = item.columns.reduce((count, column) => Math.max(count, column.links.length), 0);
 	const totalItems = item.columns.reduce((count, column) => count + column.links.length, 0);
 	const width = Math.max(columns * 210, 220 + maxItemsInColumn * 18, 180 + totalItems * 7);
 
 	return {
-		style: `--meta-columns: ${columns}; --meta-width: ${Math.min(width, 1200)}px;`
+		style: `--site-nav-columns: ${columns}; --site-nav-width: ${Math.min(width, 1200)}px;`
 	};
 }
 
@@ -321,55 +330,63 @@ const announcement = cmsNavConfig.announcement;
 const navItems = cmsNavConfig.items;
 ---
 
-<header class="meta-header">
+<header class="site-header">
 	{announcement.enabled === false ? null : (
-		<div class="meta-announcement">
-			<a href={announcement.href}>{announcement.text}</a>
+		<div class="site-announcement">
+			<a class="site-announcement__link" href={announcement.href}>{announcement.text}</a>
 		</div>
 	)}
-	<div class="meta-nav-shell">
-	<a class="meta-brand" href="/" aria-label="Metadata home">
-			<img class="meta-logo" src={metadataLogoUrl} alt="Metadata logo" />
+	<div class="site-nav-shell">
+	<a class="site-brand" href="/" aria-label="Metadata home">
+			<img class="site-brand__logo" src={metadataLogoUrl} alt="Metadata logo" />
 	</a>
 
 		<button
-			class="meta-menu-toggle"
+			class="site-hamburger"
 			type="button"
 			aria-expanded="false"
 			aria-controls={navId}
 			aria-label="Toggle navigation"
 		>
-			<span></span>
-			<span></span>
-			<span></span>
+			<span class="site-hamburger__bar"></span>
+			<span class="site-hamburger__bar"></span>
+			<span class="site-hamburger__bar"></span>
 		</button>
 
-		<nav class="meta-nav" id={navId} aria-label="Primary">
-			<ul class="meta-links">
+		<nav class="site-nav" id={navId} aria-label="Primary">
+			<ul class="site-nav__list">
 				{navItems.map((item) => (
-					<li>
+					<li class="site-nav__item">
 						{item.type === 'dropdown' ? (
-							<div class="meta-dropdown">
+							<div class="site-dropdown">
 								<a
 									href={item.href}
-									class="meta-dropdown-trigger"
+									class="site-dropdown__trigger"
 									aria-haspopup="true"
 									aria-expanded="false"
 								>
 									{item.label}
 								</a>
 								<div
-									class="meta-dropdown-panel"
+									class="site-dropdown__panel"
 									role="menu"
 									style={getDropdownPanelStyle(item).style}
 									aria-label={`${item.label} links`}
 								>
 									{item.columns.map((column) => (
-										<div class="meta-dropdown-col">
+										<div class="site-dropdown__column">
 											{column.title ? <p>{column.title}</p> : null}
-											<ul>
+											<ul class="site-dropdown__column-list">
 												{column.links.map((linkItem) => (
-													<li><a href={linkItem.href}>{linkItem.label}</a></li>
+													<li>
+														<a
+															href={linkItem.href}
+															class="site-dropdown__link site-dropdown__link--mobile-safe"
+															style="color: #0f172a !important; -webkit-text-fill-color: #0f172a !important;"
+														>
+															{linkItem.label}
+														</a>
+													</li>
 												))}
 											</ul>
 										</div>
@@ -377,29 +394,30 @@ const navItems = cmsNavConfig.items;
 								</div>
 							</div>
 						) : (
-							<a href={item.href} class={item.variant === 'button' ? 'meta-subscribe' : ''}>
+							<a href={item.href} class={item.variant === 'button' ? 'site-nav__cta' : ''}>
 								{item.label}
 							</a>
 						)}
 					</li>
 				))}
 			</ul>
-			<form class="meta-search" role="search" action="/review" method="get">
-				<label for="site-search" class="meta-sr-only">Search</label>
-				<input id="site-search" name="q" type="search" placeholder="Search topics..." />
-				<button type="submit" aria-label="Search">Search</button>
+			<form class="site-search" role="search" action="/review" method="get">
+				<label for="site-search" class="sr-only">Search</label>
+				<input id="site-search" class="site-search__input" name="q" type="search" placeholder="Search topics..." />
+				<button class="site-search__button" type="submit" aria-label="Search">Search</button>
 			</form>
 		</nav>
 	</div>
 </header>
 
 <script>
-	const shell = document.querySelector('.meta-nav-shell');
-	const toggle = document.querySelector('.meta-menu-toggle');
-	const dropdownLinks = document.querySelectorAll('.meta-dropdown-trigger');
-	const dropdowns = document.querySelectorAll('.meta-dropdown');
+	const shell = document.querySelector('.site-nav-shell');
+	const toggle = document.querySelector('.site-hamburger');
+	const dropdownLinks = document.querySelectorAll('.site-dropdown__trigger');
+	const dropdowns = document.querySelectorAll('.site-dropdown');
 	const isTouchDevice =
 		window.matchMedia('(hover: none), (pointer: coarse)').matches || 'ontouchstart' in window;
+	const isMobileNav = () => window.matchMedia('(max-width: 960px)').matches;
 
 	if (shell && toggle) {
 		toggle.addEventListener('click', () => {
@@ -409,13 +427,13 @@ const navItems = cmsNavConfig.items;
 
 		window.addEventListener('resize', () => {
 			if (window.innerWidth > 960 && shell.classList.contains('menu-open')) {
-				shell.classList.remove('menu-open');
-				toggle.setAttribute('aria-expanded', 'false');
-			}
-		});
+			shell.classList.remove('menu-open');
+			toggle.setAttribute('aria-expanded', 'false');
+		}
+	});
 	}
 
-	if (isTouchDevice && dropdownLinks.length && dropdowns.length) {
+	if (dropdownLinks.length && dropdowns.length) {
 		const closeAll = () => {
 			dropdowns.forEach((dropdown) => {
 				dropdown.classList.remove('is-open');
@@ -427,7 +445,8 @@ const navItems = cmsNavConfig.items;
 
 		dropdownLinks.forEach((link) => {
 			link.addEventListener('click', (event) => {
-				const dropdown = link.closest('.meta-dropdown');
+				if (!isMobileNav() && !isTouchDevice) return;
+				const dropdown = link.closest('.site-dropdown');
 				if (!dropdown) return;
 				if (dropdown.classList.contains('is-open')) return;
 
@@ -439,7 +458,7 @@ const navItems = cmsNavConfig.items;
 		});
 
 		document.addEventListener('click', (event) => {
-			if (event.target instanceof Element && event.target.closest('.meta-dropdown')) return;
+			if (event.target instanceof Element && event.target.closest('.site-dropdown')) return;
 			closeAll();
 		});
 
@@ -450,15 +469,18 @@ const navItems = cmsNavConfig.items;
 </script>
 
 <style>
-	.meta-header {
+	/* Desktop-first layout (default) */
+	.site-header {
 		position: sticky;
 		top: 0;
-		z-index: 40;
+		left: 0;
+		right: 0;
+		z-index: 2147483647 !important;
 		background: #f7f8fb;
 		border-bottom: 1px solid #d6dae2;
 	}
 
-	.meta-announcement {
+	.site-announcement {
 		padding: 0.35rem 1rem;
 		text-align: center;
 		border-bottom: 1px solid #e2e6ee;
@@ -466,27 +488,29 @@ const navItems = cmsNavConfig.items;
 		font-size: 0.8rem;
 	}
 
-	.meta-announcement a {
+	.site-announcement__link {
 		color: #0f172a;
 		text-decoration: none;
 	}
 
-	.meta-nav-shell {
+	.site-nav-shell {
 		display: grid;
 		grid-template-columns: auto 1fr auto;
 		align-items: center;
 		width: 100%;
 		padding: 0.7rem 1rem;
+		box-sizing: border-box;
 		column-gap: 1rem;
+		position: relative;
 	}
 
-	.meta-logo {
+	.site-brand__logo {
 		width: 132px;
 		height: 32px;
 		display: block;
 	}
 
-	.meta-brand {
+	.site-brand {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.55rem;
@@ -497,17 +521,11 @@ const navItems = cmsNavConfig.items;
 		letter-spacing: 0.01em;
 	}
 
-	.meta-brand-text {
-		display: inline-block;
-		font-size: 0.98rem;
-		font-weight: 700;
-	}
-
-	.meta-brand:hover span {
+	.site-brand:hover span {
 		opacity: 0.85;
 	}
 
-	.meta-nav {
+	.site-nav {
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -515,7 +533,7 @@ const navItems = cmsNavConfig.items;
 		width: 100%;
 	}
 
-	.meta-links {
+	.site-nav__list {
 		list-style: none;
 		display: flex;
 		align-items: center;
@@ -524,12 +542,17 @@ const navItems = cmsNavConfig.items;
 		padding: 0;
 	}
 
-	.meta-links > li {
+	.site-nav__item {
+		position: relative;
+		z-index: 1;
+	}
+
+	.site-dropdown {
 		position: relative;
 	}
 
-	.meta-links a,
-	.meta-dropdown > a {
+	.site-nav a,
+	.site-dropdown__trigger {
 		display: inline-flex;
 		align-items: center;
 		padding: 0.45rem 0.65rem;
@@ -540,22 +563,23 @@ const navItems = cmsNavConfig.items;
 		white-space: nowrap;
 	}
 
-	.meta-dropdown > a::after {
+	.site-dropdown__trigger::after {
 		content: '▾';
 		font-size: 0.76rem;
 		margin-left: 0.28rem;
 		color: #68768b;
 	}
 
-	.meta-dropdown-panel {
+	.site-dropdown__panel {
 		position: absolute;
 		top: 100%;
 		left: 50%;
 		transform: translateX(-50%);
+		z-index: 2147483647;
 		display: grid;
-		grid-template-columns: repeat(var(--meta-columns, 3), minmax(150px, 1fr));
+		grid-template-columns: repeat(var(--site-nav-columns, 3), minmax(150px, 1fr));
 		gap: 0.85rem;
-		width: min(var(--meta-width, 620px), 88vw);
+		width: min(var(--site-nav-width, 620px), 88vw);
 		padding: 0.95rem;
 		border: 1px solid var(--line, #d6dae2);
 		background: #fff;
@@ -569,16 +593,16 @@ const navItems = cmsNavConfig.items;
 		box-shadow: 0 14px 28px rgba(2, 17, 36, 0.14);
 	}
 
-	.meta-dropdown:hover .meta-dropdown-panel,
-	.meta-dropdown:focus-within .meta-dropdown-panel,
-	.meta-dropdown.is-open .meta-dropdown-panel {
+	.site-dropdown:hover .site-dropdown__panel,
+	.site-dropdown:focus-within .site-dropdown__panel,
+	.site-dropdown.is-open .site-dropdown__panel {
 		opacity: 1;
 		visibility: visible;
 		pointer-events: auto;
 		transform: translateX(-50%);
 	}
 
-	.meta-dropdown-col p {
+	.site-dropdown__column p {
 		margin: 0 0 0.45rem;
 		font-size: 0.73rem;
 		font-weight: 700;
@@ -587,7 +611,7 @@ const navItems = cmsNavConfig.items;
 		text-transform: uppercase;
 	}
 
-	.meta-dropdown-col ul {
+	.site-dropdown__column-list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
@@ -595,7 +619,7 @@ const navItems = cmsNavConfig.items;
 		gap: 0.3rem;
 	}
 
-	.meta-dropdown-col a {
+	.site-dropdown__link {
 		display: block;
 		padding: 0.3rem 0.1rem;
 		font-size: 0.87rem;
@@ -603,20 +627,28 @@ const navItems = cmsNavConfig.items;
 		color: #1e293b;
 	}
 
-	.meta-links a:hover,
-	.meta-dropdown-col a:hover {
+	.site-dropdown__link {
+		color: #0f172a;
+		-webkit-text-fill-color: #0f172a;
+		text-decoration: none;
+	}
+
+		.site-nav a:hover,
+	.site-dropdown__link:hover {
 		background: #e6ebf3;
 	}
 
-	.meta-subscribe:hover {
-		background: #e6ebf3;
+	.site-dropdown__link--mobile-safe {
+		color: #0f172a !important;
+		-webkit-text-fill-color: #0f172a !important;
 	}
 
-	.meta-subscribe {
+	.site-nav__cta {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		padding: 0.48rem 0.9rem;
+		border-radius: 0.45rem;
 		background: #f26430;
 		color: #fff;
 		font-size: 0.92rem;
@@ -625,20 +657,22 @@ const navItems = cmsNavConfig.items;
 		text-decoration: none;
 		white-space: nowrap;
 		background: #1f8a70;
+		color: #ffffff !important;
 	}
 
-	.meta-subscribe:hover {
+	.site-nav__cta:hover {
 		background: #176e5a;
+		color: #ffffff;
 	}
 
-	.meta-search {
+	.site-search {
 		margin-left: 0;
 		display: flex;
 		align-items: stretch;
 		gap: 0.45rem;
 	}
 
-	.meta-search input {
+	.site-search__input {
 		min-width: 170px;
 		width: 15rem;
 		max-width: 22vw;
@@ -650,16 +684,17 @@ const navItems = cmsNavConfig.items;
 		font-size: 0.9rem;
 	}
 
-	.meta-search input:focus {
+	.site-search__input:focus {
 		outline: 2px solid #1f8a70;
 		outline-offset: 1px;
 	}
 
-	.meta-search button {
+	.site-search__button {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		padding: 0.43rem 0.75rem;
+		margin-right: 0.5rem;
 		border: 1px solid #1f8a70;
 		background: #1f8a70;
 		color: #fff;
@@ -669,12 +704,12 @@ const navItems = cmsNavConfig.items;
 		border-radius: 0.45rem;
 	}
 
-	.meta-search button:hover {
+	.site-search__button:hover {
 		background: #176e5a;
 		border-color: #176e5a;
 	}
 
-	.meta-sr-only {
+	.sr-only {
 		position: absolute;
 		width: 1px;
 		height: 1px;
@@ -686,7 +721,7 @@ const navItems = cmsNavConfig.items;
 		border: 0;
 	}
 
-	.meta-menu-toggle {
+	.site-hamburger {
 		display: none;
 		border: 1px solid #d6dae2;
 		background: #ffffff;
@@ -694,7 +729,7 @@ const navItems = cmsNavConfig.items;
 		cursor: pointer;
 	}
 
-	.meta-menu-toggle span {
+	.site-hamburger__bar {
 		display: block;
 		width: 1rem;
 		height: 2px;
@@ -702,23 +737,55 @@ const navItems = cmsNavConfig.items;
 		margin: 0.16rem 0;
 	}
 
+	/* Hamburger layout: shown below 960px */
 	@media (max-width: 960px) {
-		.meta-nav-shell {
-			grid-template-columns: auto auto;
+		/* Hamburger-only nav states */
+		.site-dropdown.is-open .site-dropdown__panel,
+		.site-dropdown.is-open .site-dropdown__panel * {
+			color: #0f172a !important;
+			-webkit-text-fill-color: #0f172a !important;
+			text-shadow: none !important;
 		}
 
-		.meta-brand span {
+		.site-dropdown.is-open .site-dropdown__panel ul,
+		.site-dropdown.is-open .site-dropdown__column-list {
+			background: #ffffff;
+		}
+
+		.site-dropdown.is-open .site-dropdown__column li {
+			list-style: none !important;
+		}
+
+		.site-dropdown.is-open .site-dropdown__link {
+			display: block !important;
+			color: #0f172a !important;
+			-webkit-text-fill-color: #0f172a !important;
+			font-size: 0.87rem !important;
+			line-height: 1.35 !important;
+			background: transparent !important;
+		}
+
+		/* Hamburger container */
+		.site-nav-shell {
+			grid-template-columns: 1fr auto;
+			padding-right: 1.25rem;
+		}
+
+		.site-brand span {
 			display: inline;
 			font-size: 1rem;
 			letter-spacing: 0.01em;
 		}
 
-		.meta-menu-toggle {
+		.site-hamburger {
 			display: block;
 			justify-self: end;
+			margin-right: 0;
+			padding-right: 0.55rem;
+			padding-left: 0.55rem;
 		}
 
-		.meta-nav {
+		.site-nav {
 			grid-column: 1 / -1;
 			display: grid;
 			grid-template-columns: 1fr;
@@ -731,37 +798,37 @@ const navItems = cmsNavConfig.items;
 			place-items: stretch;
 		}
 
-		.meta-nav-shell.menu-open .meta-nav {
+		.site-nav-shell.menu-open .site-nav {
 			max-height: 85vh;
 			opacity: 1;
 			pointer-events: auto;
 			padding-top: 0.4rem;
 		}
 
-		.meta-links,
-		.meta-search {
+		.site-nav__list,
+		.site-search {
 			flex-direction: column;
 			margin: 0;
 		}
 
-		.meta-links {
+		.site-nav__list {
 			flex-direction: column;
 		}
 
-		.meta-links,
-		.meta-search {
+		.site-nav__list,
+		.site-search {
 			align-items: stretch;
 		}
 
-		.meta-links a,
-		.meta-subscribe,
-		.meta-search input,
-		.meta-search button {
+		.site-nav a,
+		.site-nav__cta,
+		.site-search__input,
+		.site-search__button {
 			width: 100%;
 			padding: 0.7rem 0.25rem;
 		}
 
-		.meta-search {
+		.site-search {
 			max-width: 100%;
 			width: 100%;
 			flex-direction: row;
@@ -769,22 +836,24 @@ const navItems = cmsNavConfig.items;
 			gap: 0.45rem;
 		}
 
-		.meta-search button,
-		.meta-search input {
+		.site-search__button,
+		.site-search__input {
 			max-width: none;
 		}
 
-		.meta-dropdown-panel {
+		.site-dropdown__panel {
 			position: static;
 			left: auto;
 			transform: none;
 			width: 100%;
 			border: none;
+			background: #ffffff;
 			box-shadow: none;
 			opacity: 0;
 			visibility: hidden;
 			pointer-events: auto;
 			grid-template-columns: 1fr;
+			color: #0f172a;
 			padding: 0;
 			max-height: 0;
 			overflow: hidden;
@@ -794,21 +863,56 @@ const navItems = cmsNavConfig.items;
 				max-height 220ms ease;
 		}
 
-		.meta-dropdown.is-open .meta-dropdown-panel {
+		.site-dropdown.is-open .site-dropdown__panel {
 			opacity: 1;
 			visibility: visible;
 			max-height: 1200px;
 			padding: 0.45rem 0.2rem 0;
 		}
 
-		.meta-dropdown > a::after {
+		.site-dropdown.is-open .site-dropdown__panel {
+			background-color: #ffffff;
+		}
+
+		.site-dropdown.is-open .site-dropdown__panel {
+			background: #ffffff !important;
+			color: #0f172a !important;
+			-webkit-text-fill-color: #0f172a !important;
+			text-shadow: none !important;
+		}
+
+		.site-dropdown.is-open .site-dropdown__link {
+			display: block !important;
+			color: #0f172a !important;
+			-webkit-text-fill-color: #0f172a !important;
+			background: transparent !important;
+			text-decoration: none !important;
+			opacity: 1 !important;
+			pointer-events: auto;
+		}
+
+		.site-dropdown.is-open .site-dropdown__link:visited,
+		.site-dropdown.is-open .site-dropdown__link:hover,
+		.site-dropdown.is-open .site-dropdown__link:focus {
+			color: #0f172a !important;
+			background: #e6ebf3 !important;
+		}
+
+		.site-dropdown__column-list {
+			display: block;
+		}
+
+		.site-dropdown__column li {
+			list-style: none;
+		}
+
+		.site-dropdown__trigger::after {
 			content: '';
 		}
 
-		.meta-dropdown-col p {
+		.site-dropdown__column p {
 			font-size: 0.67rem;
 			margin: 0.55rem 0 0.3rem;
 		}
 	}
 </style>
-
