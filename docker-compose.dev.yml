@@ -43,7 +43,7 @@ services:
       corepack prepare pnpm@9.15.0 &&
       corepack pnpm config set store-dir /pnpm-store &&
       corepack pnpm install &&
-      corepack pnpm dev --host 0.0.0.0 --port 4321
+      corepack pnpm dev
       "
   postgres:
     image: postgres:16

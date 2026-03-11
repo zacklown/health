@@ -91,9 +91,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'site-navigation': SiteNavigation;
+    'home-page': HomePage;
   };
   globalsSelect: {
     'site-navigation': SiteNavigationSelect<false> | SiteNavigationSelect<true>;
+    'home-page': HomePageSelect<false> | HomePageSelect<true>;
   };
   locale: null;
   user: User;
@@ -175,16 +177,32 @@ export interface Page {
    * URL slug, e.g. magnesium-glycinate
    */
   slug: string;
-  category: 'Foods' | 'Supplements' | 'Diets' | 'Studies' | 'General';
+  category: 'Foundations' | 'Principles' | 'Foods' | 'Supplements' | 'Diets' | 'Studies' | 'General';
   summary: string;
   /**
-   * Main article body text.
+   * Main article body in Markdown (supports headings, lists, emphasis, links, inline code, and images via ![alt](url)). Upload images in Media and paste their URL.
    */
   body: string;
   /**
    * Flag to highlight this item in the New section.
    */
   isNew?: boolean | null;
+  /**
+   * Mark this article as eligible for the Home page featured subject cards.
+   */
+  featureOnHome?: boolean | null;
+  /**
+   * Select which core subject area this article should represent on the Home page.
+   */
+  homeSubject?: ('Foundations' | 'Principles' | 'Foods' | 'Supplements' | 'Diets' | 'Studies') | null;
+  /**
+   * Image used on the Home page featured subject card.
+   */
+  featureImage?: (number | null) | Media;
+  /**
+   * Optional related articles shown in the review sidebar.
+   */
+  relatedArticles?: (number | Page)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -317,6 +335,10 @@ export interface PagesSelect<T extends boolean = true> {
   summary?: T;
   body?: T;
   isNew?: T;
+  featureOnHome?: T;
+  homeSubject?: T;
+  featureImage?: T;
+  relatedArticles?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -405,6 +427,20 @@ export interface SiteNavigation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page".
+ */
+export interface HomePage {
+  id: number;
+  about: {
+    eyebrow: string;
+    title: string;
+    description: string;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-navigation_select".
  */
 export interface SiteNavigationSelect<T extends boolean = true> {
@@ -436,6 +472,22 @@ export interface SiteNavigationSelect<T extends boolean = true> {
               id?: T;
             };
         id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page_select".
+ */
+export interface HomePageSelect<T extends boolean = true> {
+  about?:
+    | T
+    | {
+        eyebrow?: T;
+        title?: T;
+        description?: T;
       };
   updatedAt?: T;
   createdAt?: T;

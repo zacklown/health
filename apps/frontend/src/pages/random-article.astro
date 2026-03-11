@@ -1,0 +1,47 @@
+---
+export const prerender = false;
+
+type CmsPage = {
+	slug?: string;
+};
+
+const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
+	Boolean
+) as string[];
+
+async function getRandomArticleSlug(): Promise<string | null> {
+	for (const baseUrl of cmsBaseUrls) {
+		try {
+			const res = await fetch(`${baseUrl}/api/pages?limit=200&sort=-updatedAt`);
+			if (!res.ok) continue;
+			const data = await res.json();
+			const docs = Array.isArray(data?.docs) ? (data.docs as CmsPage[]) : [];
+			const slugs = docs
+				.map((doc) => (typeof doc.slug === 'string' ? doc.slug.trim() : ''))
+				.filter((value) => value.length > 0);
+			if (!slugs.length) continue;
+			return slugs[Math.floor(Math.random() * slugs.length)];
+		} catch (_) {
+			// Try next base URL.
+		}
+	}
+	return null;
+}
+
+const randomSlug = await getRandomArticleSlug();
+if (randomSlug) {
+	return Astro.redirect(`/${encodeURIComponent(randomSlug)}`);
+}
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>No Articles Found</title>
+	</head>
+	<body style="font-family: sans-serif; padding: 2rem;">
+		<p>No articles are available yet.</p>
+		<p><a href="/">Back to Home</a></p>
+	</body>
+</html>

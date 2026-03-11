@@ -12,7 +12,7 @@ export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'category', 'updatedAt'],
+    defaultColumns: ['title', 'category', 'featureOnHome', 'updatedAt'],
   },
   access: {
     read: () => true,
@@ -47,6 +47,8 @@ export const Pages: CollectionConfig = {
       type: 'select',
       required: true,
       options: [
+        { label: 'Foundations', value: 'Foundations' },
+        { label: 'Principles', value: 'Principles' },
         { label: 'Foods', value: 'Foods' },
         { label: 'Supplements', value: 'Supplements' },
         { label: 'Diets', value: 'Diets' },
@@ -62,10 +64,13 @@ export const Pages: CollectionConfig = {
     },
     {
       name: 'body',
-      type: 'textarea',
+      type: 'code',
       required: true,
+      defaultValue: '',
       admin: {
-        description: 'Main article body text.',
+        language: 'markdown',
+        description:
+          'Main article body in Markdown (supports headings, lists, emphasis, links, inline code, and images via ![alt](url)). Upload images in Media and paste their URL.',
       },
     },
     {
@@ -74,6 +79,48 @@ export const Pages: CollectionConfig = {
       defaultValue: true,
       admin: {
         description: 'Flag to highlight this item in the New section.',
+      },
+    },
+    {
+      name: 'featureOnHome',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Mark this article as eligible for the Home page featured subject cards.',
+      },
+    },
+    {
+      name: 'homeSubject',
+      type: 'select',
+      options: [
+        { label: 'Foundations', value: 'Foundations' },
+        { label: 'Principles', value: 'Principles' },
+        { label: 'Foods', value: 'Foods' },
+        { label: 'Supplements', value: 'Supplements' },
+        { label: 'Diets', value: 'Diets' },
+        { label: 'Studies', value: 'Studies' },
+      ],
+      admin: {
+        description: 'Select which core subject area this article should represent on the Home page.',
+        condition: (_, siblingData) => Boolean(siblingData?.featureOnHome),
+      },
+    },
+    {
+      name: 'featureImage',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Image used on the Home page featured subject card.',
+        condition: (_, siblingData) => Boolean(siblingData?.featureOnHome),
+      },
+    },
+    {
+      name: 'relatedArticles',
+      type: 'relationship',
+      relationTo: 'pages',
+      hasMany: true,
+      admin: {
+        description: 'Optional related articles shown in the review sidebar.',
       },
     },
   ],

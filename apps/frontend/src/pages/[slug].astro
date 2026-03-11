@@ -1,0 +1,485 @@
+---
+import Layout from '../layouts/Layout.astro';
+export const prerender = false;
+
+type RelatedArticle = {
+	id?: number;
+	slug?: string;
+	title?: string;
+};
+
+type CmsPage = {
+	title: string;
+	slug: string;
+	category?: string;
+	summary?: string;
+	body?: string;
+	updatedAt?: string;
+	createdAt?: string;
+	relatedArticles?: (RelatedArticle | number)[] | null;
+};
+
+type TocItem = {
+	id: string;
+	text: string;
+	level: number;
+};
+
+const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
+	Boolean
+) as string[];
+
+function escapeHtml(input: string): string {
+	return input
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;');
+}
+
+function slugifyHeading(text: string): string {
+	return text
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9\s-]/g, '')
+		.replace(/\s+/g, '-')
+		.replace(/-+/g, '-');
+}
+
+function renderInlineMarkdown(line: string): string {
+	let output = escapeHtml(line);
+	output = output.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />');
+	output = output.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+	output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+	output = output.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+	output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
+	return output;
+}
+
+function renderMarkdownWithToc(markdown: string): { html: string; toc: TocItem[] } {
+	const lines = markdown.replaceAll('\r\n', '\n').split('\n');
+	const htmlParts: string[] = [];
+	const toc: TocItem[] = [];
+	const headingCounts = new Map<string, number>();
+	let paragraphLines: string[] = [];
+	let inList = false;
+
+	const flushParagraph = () => {
+		if (!paragraphLines.length) return;
+		htmlParts.push(`<p>${renderInlineMarkdown(paragraphLines.join(' '))}</p>`);
+		paragraphLines = [];
+	};
+
+	const closeList = () => {
+		if (!inList) return;
+		htmlParts.push('</ul>');
+		inList = false;
+	};
+
+	const getHeadingId = (text: string): string => {
+		const base = slugifyHeading(text) || 'section';
+		const count = headingCounts.get(base) ?? 0;
+		headingCounts.set(base, count + 1);
+		return count === 0 ? base : `${base}-${count + 1}`;
+	};
+
+	for (const rawLine of lines) {
+		const line = rawLine.trim();
+
+		if (!line) {
+			flushParagraph();
+			closeList();
+			continue;
+		}
+
+		const horizontalRuleMatch = line.match(/^(-{3,}|\*{3,}|_{3,})$/);
+		if (horizontalRuleMatch) {
+			flushParagraph();
+			closeList();
+			htmlParts.push('<hr />');
+			continue;
+		}
+
+		const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
+		if (headingMatch) {
+			flushParagraph();
+			closeList();
+			const level = headingMatch[1].length;
+			const headingText = headingMatch[2].trim();
+			const headingId = getHeadingId(headingText);
+			toc.push({ id: headingId, text: headingText, level });
+			htmlParts.push(`<h${level} id="${headingId}">${renderInlineMarkdown(headingText)}</h${level}>`);
+			continue;
+		}
+
+		const listMatch = line.match(/^[-*]\s+(.+)$/);
+		if (listMatch) {
+			flushParagraph();
+			if (!inList) {
+				htmlParts.push('<ul>');
+				inList = true;
+			}
+			htmlParts.push(`<li>${renderInlineMarkdown(listMatch[1])}</li>`);
+			continue;
+		}
+
+		paragraphLines.push(line);
+	}
+
+	flushParagraph();
+	closeList();
+
+	return { html: htmlParts.join('\n'), toc };
+}
+
+function normalizeRelatedArticles(page: CmsPage | null): RelatedArticle[] {
+	if (!page || !Array.isArray(page.relatedArticles)) return [];
+	const seen = new Set<string>();
+	const results: RelatedArticle[] = [];
+
+	for (const entry of page.relatedArticles) {
+		if (!entry || typeof entry !== 'object') continue;
+		const slug = typeof entry.slug === 'string' ? entry.slug.trim() : '';
+		const title = typeof entry.title === 'string' ? entry.title.trim() : '';
+		if (!slug || !title) continue;
+		if (slug === page.slug) continue;
+		if (seen.has(slug)) continue;
+		seen.add(slug);
+		results.push({ id: entry.id, slug, title });
+	}
+
+	return results;
+}
+
+async function fetchPageBySlug(slug: string): Promise<CmsPage | null> {
+	for (const baseUrl of cmsBaseUrls) {
+		try {
+			const params = new URLSearchParams({
+				depth: '1',
+				limit: '1',
+				'where[slug][equals]': slug,
+			});
+			const res = await fetch(`${baseUrl}/api/pages?${params.toString()}`);
+			if (!res.ok) continue;
+			const data = await res.json();
+			if (Array.isArray(data?.docs) && data.docs.length > 0) return data.docs[0] as CmsPage;
+		} catch (_) {
+			// Try next base URL.
+		}
+	}
+	return null;
+}
+
+const slugParam = Astro.params.slug;
+const page = slugParam ? await fetchPageBySlug(slugParam) : null;
+const markdownView = renderMarkdownWithToc(page?.body || '');
+const relatedArticles = normalizeRelatedArticles(page);
+---
+
+<Layout
+	title={`${page?.title || 'Review'} | Health Atlas`}
+	description={page?.summary || page?.title || 'Health review page'}
+>
+	<main class="article-shell">
+		<a class="back-link" href="/">&larr; Back to Home</a>
+		{!page && (
+			<article>
+				<h1>Article not found</h1>
+				<p>That review does not exist yet or was unpublished.</p>
+			</article>
+		)}
+		{page && (
+			<div class="article-layout">
+				<aside class="sidebar" aria-label="Article sidebar">
+					<section class="toc" aria-label="Table of contents">
+						<h2>Table of Contents</h2>
+						{markdownView.toc.length > 0 ? (
+							<ul>
+								{markdownView.toc.map((item) => (
+									<li class={`toc__level-${item.level}`}>
+										<a class="toc-link" data-target={item.id} href={`#${item.id}`}>{item.text}</a>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p>No section headers found in this article yet.</p>
+						)}
+					</section>
+					<section class="related" aria-label="Related articles">
+						<h2>Related Articles</h2>
+						<ul>
+							{relatedArticles.map((item) => (
+								<li><a href={`/${encodeURIComponent(item.slug || '')}`}>{item.title}</a></li>
+							))}
+							<li><a href="/random-article">Go to random article</a></li>
+						</ul>
+					</section>
+				</aside>
+				<article>
+					<p class="meta">
+						<span>{page.category || 'General'}</span>
+						<span>{new Date(page.updatedAt || page.createdAt || Date.now()).toLocaleDateString()}</span>
+					</p>
+					<h1>{page.title}</h1>
+					<div class="body markdown-body" set:html={markdownView.html}></div>
+				</article>
+			</div>
+		)}
+	</main>
+</Layout>
+
+<script>
+	const headingNodes = Array.from(
+		document.querySelectorAll('.markdown-body h1[id], .markdown-body h2[id], .markdown-body h3[id]')
+	);
+	const tocLinks = Array.from(document.querySelectorAll('.toc-link'));
+
+	if (headingNodes.length && tocLinks.length) {
+		const tocById = new Map(
+			tocLinks.map((link) => [decodeURIComponent(link.getAttribute('data-target') || ''), link])
+		);
+
+		const setActiveToc = (id) => {
+			tocLinks.forEach((link) => {
+				const isActive = link.getAttribute('data-target') === id;
+				link.classList.toggle('is-active', isActive);
+			});
+		};
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const visible = entries
+					.filter((entry) => entry.isIntersecting)
+					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+				if (!visible.length) return;
+				const id = visible[0].target.id;
+				if (tocById.has(id)) setActiveToc(id);
+			},
+			{
+				root: null,
+				rootMargin: '-22% 0px -65% 0px',
+				threshold: [0, 1],
+			}
+		);
+
+		headingNodes.forEach((heading) => observer.observe(heading));
+
+		const firstHeadingId = headingNodes[0].id;
+		if (firstHeadingId) setActiveToc(firstHeadingId);
+	}
+</script>
+
+<style>
+	.article-shell {
+		width: min(1300px, calc(100vw - 2rem));
+		margin: 0 auto;
+		padding: 2rem 0 3rem;
+	}
+
+	.back-link {
+		text-decoration: none;
+		color: var(--color-accent);
+		font-weight: 600;
+	}
+
+	.article-layout {
+		margin-top: 1rem;
+		display: grid;
+		grid-template-columns: 260px minmax(0, 1fr);
+		gap: 1rem;
+		align-items: start;
+	}
+
+	.sidebar {
+		position: -webkit-sticky;
+		position: sticky;
+		top: 6.5rem;
+		display: grid;
+		gap: 1rem;
+		max-height: calc(100vh - 7rem);
+		overflow-y: auto;
+		padding-right: 0.2rem;
+	}
+
+	.toc,
+	.related {
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		padding: 0.95rem;
+	}
+
+	.toc h2,
+	.related h2 {
+		margin: 0;
+		font-size: 0.9rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-muted);
+	}
+
+	.toc ul,
+	.related ul {
+		list-style: none;
+		margin: 0.8rem 0 0;
+		padding: 0;
+		display: grid;
+		gap: 0.42rem;
+	}
+
+	.toc li,
+	.related li {
+		margin: 0;
+	}
+
+	.toc .toc__level-2 {
+		padding-left: 0.55rem;
+	}
+
+	.toc .toc__level-3 {
+		padding-left: 1.1rem;
+	}
+
+	.toc a,
+	.related a {
+		color: var(--color-text);
+		text-decoration: none;
+		font-size: 0.9rem;
+		line-height: 1.4;
+	}
+
+	.toc a:hover,
+	.related a:hover {
+		color: var(--color-accent);
+	}
+
+	.toc a.is-active {
+		color: var(--color-accent);
+		font-weight: 700;
+	}
+
+	.toc p {
+		margin: 0.8rem 0 0;
+		font-size: 0.9rem;
+		color: var(--color-muted);
+	}
+
+	article {
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		padding: 1.3rem;
+	}
+
+	.meta {
+		display: flex;
+		gap: 0.7rem;
+		font-size: 0.8rem;
+		color: var(--color-muted);
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+	}
+
+	h1 {
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		margin: 0.5rem 0;
+		font-size: clamp(1.8rem, 4vw, 2.5rem);
+		color: var(--color-text);
+	}
+
+	.body {
+		margin-top: 1rem;
+		color: var(--color-text);
+		line-height: 1.65;
+	}
+
+	.body p {
+		margin: 0 0 0.9rem;
+	}
+
+	.markdown-body h1,
+	.markdown-body h2,
+	.markdown-body h3 {
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		margin: 1.1rem 0 0.5rem;
+		line-height: 1.2;
+		scroll-margin-top: 6.8rem;
+		color: var(--color-text);
+	}
+
+	.markdown-body h1 {
+		font-size: 1.55rem;
+	}
+
+	.markdown-body h2 {
+		font-size: 1.35rem;
+	}
+
+	.markdown-body h3 {
+		font-size: 1.16rem;
+	}
+
+	.markdown-body ul {
+		margin: 0.2rem 0 1rem 1.2rem;
+		padding: 0;
+	}
+
+	.markdown-body li {
+		margin: 0 0 0.4rem;
+	}
+
+	.markdown-body a {
+		color: var(--color-accent);
+	}
+
+	.markdown-body code {
+		font-family: Consolas, Monaco, 'Courier New', monospace;
+		font-size: 0.9em;
+		padding: 0.08rem 0.22rem;
+		background: color-mix(in oklab, var(--color-muted) 26%, transparent);
+	}
+
+	.markdown-body img {
+		display: block;
+		width: 100%;
+		height: auto;
+		margin: 0.8rem 0 1rem;
+		border: 1px solid var(--color-border);
+	}
+
+	.markdown-body hr {
+		border: 0;
+		border-top: 1px solid var(--color-border);
+		margin: 1.2rem 0;
+	}
+
+	@media (max-width: 980px) {
+		.article-shell {
+			width: calc(100vw - 2rem);
+		}
+
+		.article-layout {
+			grid-template-columns: 1fr;
+		}
+
+		.sidebar {
+			display: contents;
+			position: static;
+			top: auto;
+			max-height: none;
+			overflow: visible;
+			padding-right: 0;
+		}
+
+		.toc {
+			order: 1;
+		}
+
+		article {
+			order: 2;
+		}
+
+		.related {
+			order: 3;
+		}
+	}
+</style>

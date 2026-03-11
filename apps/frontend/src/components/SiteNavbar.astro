@@ -220,8 +220,9 @@ function normalizeColumns(rawColumns: any): NavColumn[] {
 function normalizeNavItem(raw: any): NavItem | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const label = (raw.label || raw.title || '').toString().trim();
-	const href = normalizeHref(raw.href ?? raw.url ?? raw.link);
+	let href = normalizeHref(raw.href ?? raw.url ?? raw.link);
 	if (!label) return null;
+	if (href === '#' && label.toLowerCase() === 'home') href = '/';
 
 	const itemType = (raw.type || raw.kind || '').toString().toLowerCase();
 	const isButtonType = itemType === 'button';
@@ -382,7 +383,7 @@ const navItems = cmsNavConfig.items;
 														<a
 															href={linkItem.href}
 															class="site-dropdown__link site-dropdown__link--mobile-safe"
-															style="color: #0f172a !important; -webkit-text-fill-color: #0f172a !important;"
+															style="color: var(--color-text) !important; -webkit-text-fill-color: var(--color-text) !important;"
 														>
 															{linkItem.label}
 														</a>
@@ -401,7 +402,7 @@ const navItems = cmsNavConfig.items;
 					</li>
 				))}
 			</ul>
-			<form class="site-search" role="search" action="/review" method="get">
+			<form class="site-search" role="search" action="/" method="get">
 				<label for="site-search" class="sr-only">Search</label>
 				<input id="site-search" class="site-search__input" name="q" type="search" placeholder="Search topics..." />
 				<button class="site-search__button" type="submit" aria-label="Search">Search</button>
@@ -476,20 +477,20 @@ const navItems = cmsNavConfig.items;
 		left: 0;
 		right: 0;
 		z-index: 2147483647 !important;
-		background: #f7f8fb;
-		border-bottom: 1px solid #d6dae2;
+		background: var(--color-surface-alt);
+		border-bottom: 1px solid var(--color-border);
 	}
 
 	.site-announcement {
 		padding: 0.35rem 1rem;
 		text-align: center;
-		border-bottom: 1px solid #e2e6ee;
-		background: #eef2f8;
+		border-bottom: 1px solid var(--color-border);
+		background: var(--color-surface-soft);
 		font-size: 0.8rem;
 	}
 
 	.site-announcement__link {
-		color: #0f172a;
+		color: var(--color-text);
 		text-decoration: none;
 	}
 
@@ -498,6 +499,8 @@ const navItems = cmsNavConfig.items;
 		grid-template-columns: auto 1fr auto;
 		align-items: center;
 		width: 100%;
+		max-width: 100%;
+		overflow-x: clip;
 		padding: 0.7rem 1rem;
 		box-sizing: border-box;
 		column-gap: 1rem;
@@ -514,7 +517,7 @@ const navItems = cmsNavConfig.items;
 		display: inline-flex;
 		align-items: center;
 		gap: 0.55rem;
-		color: #0f172a;
+		color: var(--color-text);
 		text-decoration: none;
 		font-weight: 800;
 		font-size: 1.1rem;
@@ -556,7 +559,7 @@ const navItems = cmsNavConfig.items;
 		display: inline-flex;
 		align-items: center;
 		padding: 0.45rem 0.65rem;
-		color: #0f172a;
+		color: var(--color-text);
 		text-decoration: none;
 		font-size: 0.92rem;
 		font-weight: 600;
@@ -567,7 +570,7 @@ const navItems = cmsNavConfig.items;
 		content: '▾';
 		font-size: 0.76rem;
 		margin-left: 0.28rem;
-		color: #68768b;
+		color: var(--color-muted);
 	}
 
 	.site-dropdown__panel {
@@ -581,8 +584,8 @@ const navItems = cmsNavConfig.items;
 		gap: 0.85rem;
 		width: min(var(--site-nav-width, 620px), 88vw);
 		padding: 0.95rem;
-		border: 1px solid var(--line, #d6dae2);
-		background: #fff;
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
 		opacity: 0;
 		visibility: hidden;
 		pointer-events: none;
@@ -606,7 +609,7 @@ const navItems = cmsNavConfig.items;
 		margin: 0 0 0.45rem;
 		font-size: 0.73rem;
 		font-weight: 700;
-		color: #4d5970;
+		color: var(--color-muted);
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
@@ -624,23 +627,23 @@ const navItems = cmsNavConfig.items;
 		padding: 0.3rem 0.1rem;
 		font-size: 0.87rem;
 		font-weight: 500;
-		color: #1e293b;
+		color: var(--color-text);
 	}
 
 	.site-dropdown__link {
-		color: #0f172a;
-		-webkit-text-fill-color: #0f172a;
+		color: var(--color-text);
+		-webkit-text-fill-color: var(--color-text);
 		text-decoration: none;
 	}
 
-		.site-nav a:hover,
+	.site-nav a:hover,
 	.site-dropdown__link:hover {
-		background: #e6ebf3;
+		background: var(--color-surface-soft);
 	}
 
 	.site-dropdown__link--mobile-safe {
-		color: #0f172a !important;
-		-webkit-text-fill-color: #0f172a !important;
+		color: var(--color-text) !important;
+		-webkit-text-fill-color: var(--color-text) !important;
 	}
 
 	.site-nav__cta {
@@ -649,19 +652,19 @@ const navItems = cmsNavConfig.items;
 		justify-content: center;
 		padding: 0.48rem 0.9rem;
 		border-radius: 0.45rem;
-		background: #f26430;
+		background: var(--color-accent);
 		color: #fff;
 		font-size: 0.92rem;
 		font-weight: 500;
 		font-weight: 700;
 		text-decoration: none;
 		white-space: nowrap;
-		background: #1f8a70;
+		background: var(--color-accent);
 		color: #ffffff !important;
 	}
 
 	.site-nav__cta:hover {
-		background: #176e5a;
+		background: var(--color-accent-hover);
 		color: #ffffff;
 	}
 
@@ -677,15 +680,15 @@ const navItems = cmsNavConfig.items;
 		width: 15rem;
 		max-width: 22vw;
 		padding: 0.43rem 0.6rem;
-		border: 1px solid #c8cfdd;
+		border: 1px solid var(--color-border);
 		border-radius: 0.45rem;
-		background: #fff;
-		color: #0f172a;
+		background: var(--color-surface);
+		color: var(--color-text);
 		font-size: 0.9rem;
 	}
 
 	.site-search__input:focus {
-		outline: 2px solid #1f8a70;
+		outline: 2px solid var(--color-accent);
 		outline-offset: 1px;
 	}
 
@@ -695,8 +698,8 @@ const navItems = cmsNavConfig.items;
 		justify-content: center;
 		padding: 0.43rem 0.75rem;
 		margin-right: 0.5rem;
-		border: 1px solid #1f8a70;
-		background: #1f8a70;
+		border: 1px solid var(--color-accent);
+		background: var(--color-accent);
 		color: #fff;
 		font-size: 0.86rem;
 		font-weight: 700;
@@ -705,8 +708,8 @@ const navItems = cmsNavConfig.items;
 	}
 
 	.site-search__button:hover {
-		background: #176e5a;
-		border-color: #176e5a;
+		background: var(--color-accent-hover);
+		border-color: var(--color-accent-hover);
 	}
 
 	.sr-only {
@@ -723,8 +726,8 @@ const navItems = cmsNavConfig.items;
 
 	.site-hamburger {
 		display: none;
-		border: 1px solid #d6dae2;
-		background: #ffffff;
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
 		padding: 0.4rem 0.45rem;
 		cursor: pointer;
 	}
@@ -733,7 +736,7 @@ const navItems = cmsNavConfig.items;
 		display: block;
 		width: 1rem;
 		height: 2px;
-		background: #0f172a;
+		background: var(--color-text);
 		margin: 0.16rem 0;
 	}
 
@@ -742,14 +745,14 @@ const navItems = cmsNavConfig.items;
 		/* Hamburger-only nav states */
 		.site-dropdown.is-open .site-dropdown__panel,
 		.site-dropdown.is-open .site-dropdown__panel * {
-			color: #0f172a !important;
-			-webkit-text-fill-color: #0f172a !important;
+			color: var(--color-text) !important;
+			-webkit-text-fill-color: var(--color-text) !important;
 			text-shadow: none !important;
 		}
 
 		.site-dropdown.is-open .site-dropdown__panel ul,
 		.site-dropdown.is-open .site-dropdown__column-list {
-			background: #ffffff;
+			background: var(--color-surface);
 		}
 
 		.site-dropdown.is-open .site-dropdown__column li {
@@ -758,8 +761,8 @@ const navItems = cmsNavConfig.items;
 
 		.site-dropdown.is-open .site-dropdown__link {
 			display: block !important;
-			color: #0f172a !important;
-			-webkit-text-fill-color: #0f172a !important;
+			color: var(--color-text) !important;
+			-webkit-text-fill-color: var(--color-text) !important;
 			font-size: 0.87rem !important;
 			line-height: 1.35 !important;
 			background: transparent !important;
@@ -768,6 +771,8 @@ const navItems = cmsNavConfig.items;
 		/* Hamburger container */
 		.site-nav-shell {
 			grid-template-columns: 1fr auto;
+			max-width: 100%;
+			overflow-x: clip;
 			padding-right: 1.25rem;
 		}
 
@@ -847,13 +852,13 @@ const navItems = cmsNavConfig.items;
 			transform: none;
 			width: 100%;
 			border: none;
-			background: #ffffff;
+			background: var(--color-surface);
 			box-shadow: none;
 			opacity: 0;
 			visibility: hidden;
 			pointer-events: auto;
 			grid-template-columns: 1fr;
-			color: #0f172a;
+			color: var(--color-text);
 			padding: 0;
 			max-height: 0;
 			overflow: hidden;
@@ -871,20 +876,20 @@ const navItems = cmsNavConfig.items;
 		}
 
 		.site-dropdown.is-open .site-dropdown__panel {
-			background-color: #ffffff;
+			background-color: var(--color-surface);
 		}
 
 		.site-dropdown.is-open .site-dropdown__panel {
-			background: #ffffff !important;
-			color: #0f172a !important;
-			-webkit-text-fill-color: #0f172a !important;
+			background: var(--color-surface) !important;
+			color: var(--color-text) !important;
+			-webkit-text-fill-color: var(--color-text) !important;
 			text-shadow: none !important;
 		}
 
 		.site-dropdown.is-open .site-dropdown__link {
 			display: block !important;
-			color: #0f172a !important;
-			-webkit-text-fill-color: #0f172a !important;
+			color: var(--color-text) !important;
+			-webkit-text-fill-color: var(--color-text) !important;
 			background: transparent !important;
 			text-decoration: none !important;
 			opacity: 1 !important;
@@ -894,8 +899,8 @@ const navItems = cmsNavConfig.items;
 		.site-dropdown.is-open .site-dropdown__link:visited,
 		.site-dropdown.is-open .site-dropdown__link:hover,
 		.site-dropdown.is-open .site-dropdown__link:focus {
-			color: #0f172a !important;
-			background: #e6ebf3 !important;
+			color: var(--color-text) !important;
+			background: var(--color-surface-soft) !important;
 		}
 
 		.site-dropdown__column-list {
