@@ -6,9 +6,11 @@
     "dev": "astro dev --host 0.0.0.0 --port 4321",
     "build": "astro build",
     "preview": "astro preview",
+    "start": "node ./dist/server/entry.mjs",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/node": "^9.4.6",
     "astro": "^5.17.1"
   }
 }

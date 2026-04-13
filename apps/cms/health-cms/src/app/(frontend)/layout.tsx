@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `${label} Health CMS Admin Panel`,
-    description: `Payload ${label} CMS Admin Panel for Health CMS`,
+    description: `${label} CMS Admin Panel for Health CMS`,
   }
 }
 

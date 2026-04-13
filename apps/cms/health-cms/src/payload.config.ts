@@ -21,6 +21,18 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      graphics: {
+        Icon: {
+          path: '@/components/admin/MetadataIcon',
+          exportName: 'MetadataIcon',
+        },
+        Logo: {
+          path: '@/components/admin/MetadataLogo',
+          exportName: 'MetadataLogo',
+        },
+      },
+    },
   },
   collections: [Users, Media, Pages, DictionaryEntries],
   globals: [SiteNavigation, HomePage],

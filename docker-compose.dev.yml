@@ -9,6 +9,7 @@ services:
     environment:
       PNPM_STORE_DIR: /pnpm-store
       DATABASE_URL: postgres://payload_dev_user:payload_dev_password@postgres:5432/payload_dev
+      PAYLOAD_FORCE_DRIZZLE_PUSH: "true"
     depends_on:
       postgres:
         condition: service_healthy

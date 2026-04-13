@@ -182,9 +182,93 @@ export interface Page {
   category: 'Foundations' | 'Principles' | 'Foods' | 'Supplements' | 'Diets' | 'Studies' | 'General';
   summary: string;
   /**
-   * Main article body in Markdown (supports headings, lists, emphasis, links, inline code, and images via ![alt](url)). Upload images in Media and paste their URL.
+   * Overall practical recommendation strength using your Low-Pebble to High-Boulder scale.
    */
-  body: string;
+  rockRating: 'low-pebble' | 'medium-rock' | 'high-rock' | 'high-boulder';
+  /**
+   * Overall confidence in the evidence base from Low to High.
+   */
+  scientificEvidence: 'low' | 'moderate-low' | 'moderate' | 'moderate-high' | 'high';
+  rockRatingScore?: number | null;
+  scientificEvidenceScore?: number | null;
+  /**
+   * Optional primary image displayed near the top of the article.
+   */
+  heroImage?: (number | null) | Media;
+  /**
+   * Optional caption shown below the primary article image.
+   */
+  heroImageCaption?: string | null;
+  /**
+   * Primary article template. Build the article as repeatable sections with subheadings, images, and collapsible citation/study tables.
+   */
+  sections?:
+    | {
+        heading: string;
+        /**
+         * Choose the semantic heading level for this section. Use H3/H4 for subsections nested under earlier sections.
+         */
+        headingLevel: 'h2' | 'h3' | 'h4';
+        /**
+         * Section content in Markdown. Use this for the main written explanation under the section heading.
+         */
+        body: string;
+        /**
+         * Optional image displayed with this section.
+         */
+        image?: (number | null) | Media;
+        /**
+         * Choose which side of the section the image should occupy.
+         */
+        imagePlacement?: ('left' | 'right') | null;
+        /**
+         * Controls how much width the image takes inside the section layout.
+         */
+        imageSize?: ('small' | 'medium' | 'large') | null;
+        /**
+         * Exact width of the section image relative to the article column.
+         */
+        imageWidth?: ('25' | '30' | '35' | '38' | '42' | '46' | '50' | '55' | '60') | null;
+        /**
+         * Optional caption shown below the section image.
+         */
+        imageCaption?: string | null;
+        /**
+         * Each item renders as a collapsible dropdown for this section. Put one or more study rows inside each dropdown.
+         */
+        evidenceGroups?:
+          | {
+              /**
+               * Dropdown label, for example "Clinical studies" or "Mechanistic evidence".
+               */
+              title: string;
+              /**
+               * Optional short note shown above the table when the dropdown is opened.
+               */
+              intro?: string | null;
+              /**
+               * Rows for the citation / study table inside this dropdown.
+               */
+              studies: {
+                citation: string;
+                studyType?: string | null;
+                finding: string;
+                /**
+                 * Optional URL to the paper, DOI, PubMed, or journal page.
+                 */
+                link?: string | null;
+                id?: string | null;
+              }[];
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Legacy full-article Markdown field kept for older articles. New articles should use the structured Sections field above.
+   */
+  body?: string | null;
   /**
    * Flag to highlight this item in the New section.
    */
@@ -373,6 +457,41 @@ export interface PagesSelect<T extends boolean = true> {
   slug?: T;
   category?: T;
   summary?: T;
+  rockRating?: T;
+  scientificEvidence?: T;
+  rockRatingScore?: T;
+  scientificEvidenceScore?: T;
+  heroImage?: T;
+  heroImageCaption?: T;
+  sections?:
+    | T
+    | {
+        heading?: T;
+        headingLevel?: T;
+        body?: T;
+        image?: T;
+        imagePlacement?: T;
+        imageSize?: T;
+        imageWidth?: T;
+        imageCaption?: T;
+        evidenceGroups?:
+          | T
+          | {
+              title?: T;
+              intro?: T;
+              studies?:
+                | T
+                | {
+                    citation?: T;
+                    studyType?: T;
+                    finding?: T;
+                    link?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
   body?: T;
   isNew?: T;
   featureOnHome?: T;
@@ -494,6 +613,36 @@ export interface HomePage {
     title: string;
     description: string;
   };
+  /**
+   * Choose exactly which article sections appear on the homepage and in what order. No filler cards will be shown for missing items.
+   */
+  featuredSections?:
+    | {
+        eyebrow: string;
+        article: number | Page;
+        /**
+         * Optional custom summary for the homepage card. Leave blank to use the article summary.
+         */
+        summaryOverride?: string | null;
+        /**
+         * Optional homepage-only image. If blank, the article feature image will be used, then the article hero image.
+         */
+        imageOverride?: (number | null) | Media;
+        /**
+         * Choose which side of the homepage card the image should appear on.
+         */
+        imagePlacement?: ('left' | 'right') | null;
+        /**
+         * Set the overall visual size of the homepage image area.
+         */
+        imageSize?: ('small' | 'medium' | 'large') | null;
+        /**
+         * Control how much horizontal space the image takes within the homepage card.
+         */
+        imageWidth?: ('25' | '30' | '35' | '38' | '40' | '45' | '50' | '55' | '60') | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -546,6 +695,18 @@ export interface HomePageSelect<T extends boolean = true> {
         eyebrow?: T;
         title?: T;
         description?: T;
+      };
+  featuredSections?:
+    | T
+    | {
+        eyebrow?: T;
+        article?: T;
+        summaryOverride?: T;
+        imageOverride?: T;
+        imagePlacement?: T;
+        imageSize?: T;
+        imageWidth?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;

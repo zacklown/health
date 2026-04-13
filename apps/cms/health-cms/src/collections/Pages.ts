@@ -8,6 +8,220 @@ const slugify = (input: string): string =>
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 
+const rockRatingScale = [
+  { label: 'Low Pebble', value: 'low-pebble', score: 1 },
+  { label: 'Medium Rock', value: 'medium-rock', score: 2 },
+  { label: 'High Rock', value: 'high-rock', score: 3 },
+  { label: 'High Boulder', value: 'high-boulder', score: 4 },
+] as const
+
+const scientificEvidenceScale = [
+  { label: 'Low', value: 'low', score: 1 },
+  { label: 'Moderate-Low', value: 'moderate-low', score: 2 },
+  { label: 'Moderate', value: 'moderate', score: 3 },
+  { label: 'Moderate-High', value: 'moderate-high', score: 4 },
+  { label: 'High', value: 'high', score: 5 },
+] as const
+
+const getScaleScore = (
+  value: unknown,
+  scale: ReadonlyArray<{ value: string; score: number }>,
+): number | null => {
+  if (typeof value !== 'string') return null
+  const match = scale.find((item) => item.value === value)
+  return match?.score ?? null
+}
+
+const articleSectionFields: NonNullable<CollectionConfig['fields']>[number][] = [
+  {
+    name: 'heading',
+    type: 'text',
+    required: true,
+  },
+  {
+    name: 'headingLevel',
+    label: 'Heading Level',
+    type: 'select',
+    required: true,
+    defaultValue: 'h2',
+    options: [
+      { label: 'H2', value: 'h2' },
+      { label: 'H3', value: 'h3' },
+      { label: 'H4', value: 'h4' },
+    ],
+    admin: {
+      description:
+        'Choose the semantic heading level for this section. Use H3/H4 for subsections nested under earlier sections.',
+    },
+  },
+  {
+    name: 'body',
+    type: 'code',
+    required: true,
+    defaultValue: '',
+    admin: {
+      language: 'markdown',
+      description:
+        'Section content in Markdown. Use this for the main written explanation under the section heading.',
+    },
+  },
+  {
+    type: 'row',
+    fields: [
+      {
+        name: 'image',
+        type: 'upload',
+        relationTo: 'media',
+        admin: {
+          width: '40%',
+          description: 'Optional image displayed with this section.',
+        },
+      },
+      {
+        name: 'imagePlacement',
+        label: 'Image Side',
+        type: 'select',
+        defaultValue: 'right',
+        options: [
+          { label: 'Left', value: 'left' },
+          { label: 'Right', value: 'right' },
+        ],
+        admin: {
+          width: '30%',
+          condition: (_, siblingData) => Boolean(siblingData?.image),
+          description: 'Choose which side of the section the image should occupy.',
+        },
+      },
+      {
+        name: 'imageSize',
+        label: 'Image Size',
+        type: 'select',
+        defaultValue: 'medium',
+        options: [
+          { label: 'Small', value: 'small' },
+          { label: 'Medium', value: 'medium' },
+          { label: 'Large', value: 'large' },
+        ],
+        admin: {
+          width: '30%',
+          condition: (_, siblingData) => Boolean(siblingData?.image),
+          description: 'Controls how much width the image takes inside the section layout.',
+        },
+      },
+      {
+        name: 'imageWidth',
+        label: 'Image Width',
+        type: 'select',
+        defaultValue: '38',
+        options: [
+          { label: '25%', value: '25' },
+          { label: '30%', value: '30' },
+          { label: '35%', value: '35' },
+          { label: '38%', value: '38' },
+          { label: '42%', value: '42' },
+          { label: '46%', value: '46' },
+          { label: '50%', value: '50' },
+          { label: '55%', value: '55' },
+          { label: '60%', value: '60' },
+        ],
+        admin: {
+          width: '30%',
+          condition: (_, siblingData) => Boolean(siblingData?.image),
+          description: 'Exact width of the section image relative to the article column.',
+        },
+      },
+    ],
+  },
+  {
+    name: 'imageCaption',
+    type: 'text',
+    admin: {
+      description: 'Optional caption shown below the section image.',
+      condition: (_, siblingData) => Boolean(siblingData?.image),
+    },
+  },
+  {
+    name: 'evidenceGroups',
+    label: 'Citation / Study Dropdowns',
+    type: 'array',
+    admin: {
+      description:
+        'Each item renders as a collapsible dropdown for this section. Put one or more study rows inside each dropdown.',
+      initCollapsed: true,
+    },
+    fields: [
+      {
+        name: 'title',
+        type: 'text',
+        required: true,
+        admin: {
+          description: 'Dropdown label, for example "Clinical studies" or "Mechanistic evidence".',
+        },
+      },
+      {
+        name: 'intro',
+        type: 'textarea',
+        admin: {
+          description: 'Optional short note shown above the table when the dropdown is opened.',
+        },
+      },
+      {
+        name: 'studies',
+        type: 'array',
+        required: true,
+        minRows: 1,
+        labels: {
+          singular: 'Study Row',
+          plural: 'Study Rows',
+        },
+        admin: {
+          description: 'Rows for the citation / study table inside this dropdown.',
+          initCollapsed: true,
+        },
+        fields: [
+          {
+            name: 'citation',
+            type: 'textarea',
+            required: true,
+          },
+          {
+            name: 'studyType',
+            label: 'Study Type',
+            type: 'text',
+          },
+          {
+            name: 'finding',
+            type: 'textarea',
+            required: true,
+          },
+          {
+            name: 'link',
+            type: 'text',
+            admin: {
+              description: 'Optional URL to the paper, DOI, PubMed, or journal page.',
+            },
+            validate: (value: unknown) => {
+              if (value == null || value === '') return true
+              if (typeof value !== 'string') return 'Link must be a URL.'
+
+              try {
+                const parsed = new URL(value)
+                if (!['http:', 'https:'].includes(parsed.protocol)) {
+                  return 'Enter a valid URL beginning with http:// or https://'
+                }
+
+                return true
+              } catch {
+                return 'Enter a valid URL beginning with http:// or https://'
+              }
+            },
+          },
+        ],
+      },
+    ],
+  },
+]
+
 export const Pages: CollectionConfig = {
   slug: 'pages',
   admin: {
@@ -63,14 +277,107 @@ export const Pages: CollectionConfig = {
       required: true,
     },
     {
+      type: 'row',
+      fields: [
+        {
+          name: 'rockRating',
+          label: 'ROCK Rating',
+          type: 'select',
+          required: true,
+          defaultValue: 'medium-rock',
+          options: rockRatingScale.map(({ label, value }) => ({ label, value })),
+          index: true,
+          admin: {
+            width: '50%',
+            description:
+              'Overall practical recommendation strength using your Low-Pebble to High-Boulder scale.',
+          },
+        },
+        {
+          name: 'scientificEvidence',
+          label: 'Scientific Evidence',
+          type: 'select',
+          required: true,
+          defaultValue: 'moderate',
+          options: scientificEvidenceScale.map(({ label, value }) => ({ label, value })),
+          index: true,
+          admin: {
+            width: '50%',
+            description: 'Overall confidence in the evidence base from Low to High.',
+          },
+        },
+      ],
+    },
+    {
+      name: 'rockRatingScore',
+      label: 'ROCK Rating Sort Score',
+      type: 'number',
+      index: true,
+      admin: {
+        readOnly: true,
+        hidden: true,
+      },
+      hooks: {
+        beforeValidate: [
+          ({ siblingData }) => getScaleScore(siblingData?.rockRating, rockRatingScale),
+        ],
+      },
+    },
+    {
+      name: 'scientificEvidenceScore',
+      label: 'Scientific Evidence Sort Score',
+      type: 'number',
+      index: true,
+      admin: {
+        readOnly: true,
+        hidden: true,
+      },
+      hooks: {
+        beforeValidate: [
+          ({ siblingData }) =>
+            getScaleScore(siblingData?.scientificEvidence, scientificEvidenceScale),
+        ],
+      },
+    },
+    {
+      name: 'heroImage',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Optional primary image displayed near the top of the article.',
+      },
+    },
+    {
+      name: 'heroImageCaption',
+      type: 'text',
+      admin: {
+        description: 'Optional caption shown below the primary article image.',
+        condition: (_, siblingData) => Boolean(siblingData?.heroImage),
+      },
+    },
+    {
+      name: 'sections',
+      type: 'array',
+      minRows: 1,
+      labels: {
+        singular: 'Article Section',
+        plural: 'Article Sections',
+      },
+      admin: {
+        description:
+          'Primary article template. Build the article as repeatable sections with subheadings, images, and collapsible citation/study tables.',
+        initCollapsed: true,
+      },
+      fields: articleSectionFields,
+    },
+    {
       name: 'body',
       type: 'code',
-      required: true,
       defaultValue: '',
       admin: {
         language: 'markdown',
         description:
-          'Main article body in Markdown (supports headings, lists, emphasis, links, inline code, and images via ![alt](url)). Upload images in Media and paste their URL.',
+          'Legacy full-article Markdown field kept for older articles. New articles should use the structured Sections field above.',
       },
     },
     {

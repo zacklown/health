@@ -2,7 +2,6 @@ import { headers as getHeaders } from 'next/headers.js'
 import Image from 'next/image'
 import { getPayload } from 'payload'
 import React from 'react'
-import { fileURLToPath } from 'url'
 
 import config from '@/payload.config'
 import './styles.css'
@@ -12,19 +11,17 @@ export default async function HomePage() {
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
   const { user } = await payload.auth({ headers })
-  const label = process.env.NEXT_PUBLIC_PORTAL_LABEL ?? 'CMS';
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  const label = process.env.NEXT_PUBLIC_PORTAL_LABEL ?? 'CMS'
 
   return (
     <div className="home">
       <div className="content">
         <picture>
-          <source srcSet="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg" />
           <Image
-            alt="Payload Logo"
+            alt="Metadata Logo"
             height={65}
-            src="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg"
-            width={65}
+            src="/metadata-logo.png"
+            width={180}
           />
         </picture>
         {!user && (<h1>Welcome to Health CMS.<br />This is the {label} CMS!</h1>)}

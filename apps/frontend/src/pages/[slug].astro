@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { renderMarkdown, renderMarkdownWithToc, slugifyHeading, type TocItem } from '../lib/articleRendering';
 export const prerender = false;
 
 type RelatedArticle = {
@@ -8,147 +9,143 @@ type RelatedArticle = {
 	title?: string;
 };
 
+type CmsMedia = {
+	url?: string | null;
+	alt?: string | null;
+};
+
+type StudyRow = {
+	citation?: string | null;
+	studyType?: string | null;
+	finding?: string | null;
+	link?: string | null;
+};
+
+type EvidenceGroup = {
+	title?: string | null;
+	intro?: string | null;
+	studies?: StudyRow[] | null;
+};
+
+type ArticleSection = {
+	heading?: string | null;
+	headingLevel?: string | null;
+	body?: string | null;
+	image?: CmsMedia | number | null;
+	imagePlacement?: string | null;
+	imageSize?: string | null;
+	imageWidth?: string | null;
+	imageCaption?: string | null;
+	evidenceGroups?: EvidenceGroup[] | null;
+};
+
 type CmsPage = {
 	title: string;
 	slug: string;
 	category?: string;
 	summary?: string;
+	rockRating?: string | null;
+	scientificEvidence?: string | null;
 	body?: string;
+	heroImage?: CmsMedia | number | null;
+	heroImageCaption?: string | null;
+	sections?: ArticleSection[] | null;
 	updatedAt?: string;
 	createdAt?: string;
 	relatedArticles?: (RelatedArticle | number)[] | null;
 };
 
-type TocItem = {
-	id: string;
-	text: string;
-	level: number;
-};
-
 const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
 	Boolean
 ) as string[];
+const publicCmsBaseUrl = ((import.meta as any).env.PUBLIC_CMS_PUBLIC_URL as string | undefined)?.replace(/\/+$/, '') ||
+	`${Astro.url.protocol}//${Astro.url.hostname}:3000`;
 
-function escapeHtml(input: string): string {
-	return input
-		.replaceAll('&', '&amp;')
-		.replaceAll('<', '&lt;')
-		.replaceAll('>', '&gt;')
-		.replaceAll('"', '&quot;')
-		.replaceAll("'", '&#39;');
+const rockRatingLabels: Record<string, string> = {
+	'low-pebble': 'Low Pebble',
+	'medium-rock': 'Medium Rock',
+	'high-rock': 'High Rock',
+	'high-boulder': 'High Boulder',
+};
+
+const scientificEvidenceLabels: Record<string, string> = {
+	low: 'Low',
+	'moderate-low': 'Moderate-Low',
+	moderate: 'Moderate',
+	'moderate-high': 'Moderate-High',
+	high: 'High',
+};
+
+function normalizeMediaUrl(url: string): string {
+	if (/^https?:\/\//i.test(url)) {
+		try {
+			const parsed = new URL(url);
+			if (parsed.hostname === 'cms') {
+				parsed.protocol = Astro.url.protocol;
+				parsed.hostname = Astro.url.hostname;
+				parsed.port = '3000';
+				return parsed.toString();
+			}
+			return parsed.toString();
+		} catch {
+			return url;
+		}
+	}
+	return `${publicCmsBaseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
-function slugifyHeading(text: string): string {
-	return text
-		.toLowerCase()
-		.trim()
-		.replace(/[^a-z0-9\s-]/g, '')
-		.replace(/\s+/g, '-')
-		.replace(/-+/g, '-');
+function getMediaData(media: CmsMedia | number | null | undefined): { url: string; alt: string } | null {
+	if (!media || typeof media !== 'object') return null;
+	const url = typeof media.url === 'string' && media.url.trim() ? normalizeMediaUrl(media.url) : '';
+	if (!url) return null;
+	const alt = typeof media.alt === 'string' && media.alt.trim() ? media.alt.trim() : '';
+	return { url, alt };
 }
 
-function renderTermLinks(text: string): string {
-	const bracketSyntaxLinked = text.replace(/\[\[([a-z0-9][a-z0-9-]{0,63})\]\]/gi, (match, rawTag) => {
-		const tag = String(rawTag || '');
-		if (!tag) return match;
-		const slug = tag.toLowerCase();
-		return `<a class="term-link" href="/dictionary#${encodeURIComponent(slug)}">${tag}</a>`;
+function getSelectLabel(value: string | null | undefined, labels: Record<string, string>): string | null {
+	if (!value) return null;
+	return labels[value] || value;
+}
+
+function normalizeSections(page: CmsPage | null): ArticleSection[] {
+	if (!page || !Array.isArray(page.sections)) return [];
+
+	return page.sections.filter((section) => {
+		if (!section || typeof section !== 'object') return false;
+		const heading = typeof section.heading === 'string' ? section.heading.trim() : '';
+		const body = typeof section.body === 'string' ? section.body.trim() : '';
+		const evidenceGroups = Array.isArray(section.evidenceGroups) ? section.evidenceGroups : [];
+		return Boolean(heading || body || evidenceGroups.length);
 	});
-
-	return bracketSyntaxLinked.replace(/(^|[\s(>])#([a-z0-9][a-z0-9-]{0,63})\b/gi, (match, prefix, rawTag) => {
-		const tag = String(rawTag || '');
-		if (!tag) return match;
-		if (/^[0-9a-f]{3}([0-9a-f]{3})?$/i.test(tag)) return match;
-		const slug = tag.toLowerCase();
-		return `${prefix}<a class="term-link" href="/dictionary#${encodeURIComponent(slug)}">${tag}</a>`;
-	});
 }
 
-function renderInlineMarkdown(line: string): string {
-	let output = escapeHtml(line);
-	output = output.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />');
-	output = output.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
-	output = renderTermLinks(output);
-	output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-	output = output.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-	output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
-	return output;
-}
-
-function renderMarkdownWithToc(markdown: string): { html: string; toc: TocItem[] } {
-	const lines = markdown.replaceAll('\r\n', '\n').split('\n');
-	const htmlParts: string[] = [];
-	const toc: TocItem[] = [];
+function buildStructuredToc(sections: ArticleSection[]): TocItem[] {
 	const headingCounts = new Map<string, number>();
-	let paragraphLines: string[] = [];
-	let inList = false;
 
-	const flushParagraph = () => {
-		if (!paragraphLines.length) return;
-		htmlParts.push(`<p>${renderInlineMarkdown(paragraphLines.join(' '))}</p>`);
-		paragraphLines = [];
-	};
-
-	const closeList = () => {
-		if (!inList) return;
-		htmlParts.push('</ul>');
-		inList = false;
-	};
-
-	const getHeadingId = (text: string): string => {
-		const base = slugifyHeading(text) || 'section';
+	return sections.map((section, index) => {
+		const text =
+			(typeof section.heading === 'string' && section.heading.trim()) || `Section ${index + 1}`;
+		const headingLevel = section.headingLevel === 'h3' ? 3 : section.headingLevel === 'h4' ? 4 : 2;
+		const base = slugifyHeading(text) || `section-${index + 1}`;
 		const count = headingCounts.get(base) ?? 0;
 		headingCounts.set(base, count + 1);
-		return count === 0 ? base : `${base}-${count + 1}`;
-	};
+		const id = count === 0 ? base : `${base}-${count + 1}`;
+		return { id, text, level: headingLevel };
+	});
+}
 
-	for (const rawLine of lines) {
-		const line = rawLine.trim();
-
-		if (!line) {
-			flushParagraph();
-			closeList();
-			continue;
-		}
-
-		const horizontalRuleMatch = line.match(/^(-{3,}|\*{3,}|_{3,})$/);
-		if (horizontalRuleMatch) {
-			flushParagraph();
-			closeList();
-			htmlParts.push('<hr />');
-			continue;
-		}
-
-		const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
-		if (headingMatch) {
-			flushParagraph();
-			closeList();
-			const level = headingMatch[1].length;
-			const headingText = headingMatch[2].trim();
-			const headingId = getHeadingId(headingText);
-			toc.push({ id: headingId, text: headingText, level });
-			htmlParts.push(`<h${level} id="${headingId}">${renderInlineMarkdown(headingText)}</h${level}>`);
-			continue;
-		}
-
-		const listMatch = line.match(/^[-*]\s+(.+)$/);
-		if (listMatch) {
-			flushParagraph();
-			if (!inList) {
-				htmlParts.push('<ul>');
-				inList = true;
-			}
-			htmlParts.push(`<li>${renderInlineMarkdown(listMatch[1])}</li>`);
-			continue;
-		}
-
-		paragraphLines.push(line);
+function resolveSectionImageWidth(
+	imageWidthValue: string | null | undefined,
+	imageSize: string,
+): string {
+	const numericWidth = Number(imageWidthValue);
+	if (Number.isFinite(numericWidth) && numericWidth >= 25 && numericWidth <= 60) {
+		return `${numericWidth}%`;
 	}
 
-	flushParagraph();
-	closeList();
-
-	return { html: htmlParts.join('\n'), toc };
+	if (imageSize === 'small') return '30%';
+	if (imageSize === 'large') return '50%';
+	return '38%';
 }
 
 function normalizeRelatedArticles(page: CmsPage | null): RelatedArticle[] {
@@ -174,7 +171,7 @@ async function fetchPageBySlug(slug: string): Promise<CmsPage | null> {
 	for (const baseUrl of cmsBaseUrls) {
 		try {
 			const params = new URLSearchParams({
-				depth: '1',
+				depth: '2',
 				limit: '1',
 				'where[slug][equals]': slug,
 			});
@@ -191,7 +188,13 @@ async function fetchPageBySlug(slug: string): Promise<CmsPage | null> {
 
 const slugParam = Astro.params.slug;
 const page = slugParam ? await fetchPageBySlug(slugParam) : null;
+const sections = normalizeSections(page);
+const structuredToc = buildStructuredToc(sections);
 const markdownView = renderMarkdownWithToc(page?.body || '');
+const tocItems = structuredToc.length > 0 ? structuredToc : markdownView.toc;
+const heroImage = getMediaData(page?.heroImage);
+const rockRatingLabel = getSelectLabel(page?.rockRating, rockRatingLabels);
+const scientificEvidenceLabel = getSelectLabel(page?.scientificEvidence, scientificEvidenceLabels);
 const relatedArticles = normalizeRelatedArticles(page);
 ---
 
@@ -212,9 +215,9 @@ const relatedArticles = normalizeRelatedArticles(page);
 				<aside class="sidebar" aria-label="Article sidebar">
 					<section class="toc" aria-label="Table of contents">
 						<h2>Table of Contents</h2>
-						{markdownView.toc.length > 0 ? (
+						{tocItems.length > 0 ? (
 							<ul>
-								{markdownView.toc.map((item) => (
+								{tocItems.map((item) => (
 									<li class={`toc__level-${item.level}`}>
 										<a class="toc-link" data-target={item.id} href={`#${item.id}`}>{item.text}</a>
 									</li>
@@ -235,12 +238,135 @@ const relatedArticles = normalizeRelatedArticles(page);
 					</section>
 				</aside>
 				<article>
-					<p class="meta">
-						<span>{page.category || 'General'}</span>
-						<span>{new Date(page.updatedAt || page.createdAt || Date.now()).toLocaleDateString()}</span>
-					</p>
-					<h1>{page.title}</h1>
-					<div class="body markdown-body" set:html={markdownView.html}></div>
+					<header class={`article-header${heroImage ? ' article-header--with-hero' : ''}`}>
+						<div class="article-header__content">
+							<p class="meta">
+								<span>{page.category || 'General'}</span>
+								<span>{new Date(page.updatedAt || page.createdAt || Date.now()).toLocaleDateString()}</span>
+							</p>
+							<h1>{page.title}</h1>
+							{(rockRatingLabel || scientificEvidenceLabel) && (
+								<div class="article-ratings" aria-label="Article ratings">
+									{rockRatingLabel && (
+										<p><strong>ROCK Rating:</strong> {rockRatingLabel}</p>
+									)}
+									{scientificEvidenceLabel && (
+										<p><strong>Scientific Evidence:</strong> {scientificEvidenceLabel}</p>
+									)}
+								</div>
+							)}
+							{page.summary && <p class="article-summary">{page.summary}</p>}
+						</div>
+						{heroImage && (
+							<figure class="hero-figure">
+								<img src={heroImage.url} alt={heroImage.alt || page.title} loading="eager" />
+								{page.heroImageCaption && <figcaption>{page.heroImageCaption}</figcaption>}
+							</figure>
+						)}
+					</header>
+					{sections.length > 0 ? (
+						<div class="body structured-body">
+							{sections.map((section, index) => {
+								const tocItem = structuredToc[index];
+								const sectionImage = getMediaData(section.image);
+								const evidenceGroups = Array.isArray(section.evidenceGroups) ? section.evidenceGroups : [];
+								const imagePlacement = section.imagePlacement === 'left' ? 'left' : 'right';
+								const imageSize =
+									section.imageSize === 'small' || section.imageSize === 'large'
+										? section.imageSize
+										: 'medium';
+								const imageWidth = resolveSectionImageWidth(section.imageWidth, imageSize);
+
+								return (
+									<section class="article-section" id={tocItem?.id || `section-${index + 1}`}>
+										{section.headingLevel === 'h3' ? (
+											<h3 class="article-section__heading">{section.heading || `Section ${index + 1}`}</h3>
+										) : section.headingLevel === 'h4' ? (
+											<h4 class="article-section__heading">{section.heading || `Section ${index + 1}`}</h4>
+										) : (
+											<h2 class="article-section__heading">{section.heading || `Section ${index + 1}`}</h2>
+										)}
+										<div class="article-section__layout">
+											{sectionImage && (
+												<figure
+													class={`section-figure section-figure--${imagePlacement} section-figure--${imageSize}`}
+													style={`--section-image-width: ${imageWidth};`}
+												>
+													<img
+														src={sectionImage.url}
+														alt={sectionImage.alt || section.heading || `Section ${index + 1} image`}
+														loading="lazy"
+													/>
+													{section.imageCaption && <figcaption>{section.imageCaption}</figcaption>}
+												</figure>
+											)}
+											{section.body && (
+												<div class="section-copy markdown-body" set:html={renderMarkdown(section.body)} />
+											)}
+										</div>
+										{evidenceGroups.length > 0 && (
+											<div class="evidence-groups">
+												{evidenceGroups.map((group) => {
+													const rows = Array.isArray(group.studies)
+														? group.studies.filter(
+																(row) =>
+																	row &&
+																	typeof row === 'object' &&
+																	((typeof row.citation === 'string' && row.citation.trim()) ||
+																		(typeof row.finding === 'string' && row.finding.trim()))
+														  )
+														: [];
+
+													if (!rows.length) return null;
+
+													return (
+														<details class="evidence-dropdown">
+															<summary>{group.title || 'Citations and Studies'}</summary>
+															<div class="evidence-dropdown__content">
+																{group.intro && <p class="evidence-intro">{group.intro}</p>}
+																<div class="evidence-table-wrap">
+																	<table class="evidence-table">
+																		<thead>
+																			<tr>
+																				<th scope="col">Citation</th>
+																				<th scope="col">Study Type</th>
+																				<th scope="col">Key Finding</th>
+																				<th scope="col">Link</th>
+																			</tr>
+																		</thead>
+																		<tbody>
+																			{rows.map((row) => (
+																				<tr>
+																					<td>{row.citation || '-'}</td>
+																					<td>{row.studyType || '-'}</td>
+																					<td>{row.finding || '-'}</td>
+																					<td>
+																						{row.link ? (
+																							<a href={row.link} target="_blank" rel="noreferrer">
+																								Open study
+																							</a>
+																						) : (
+																							'-'
+																						)}
+																					</td>
+																				</tr>
+																			))}
+																		</tbody>
+																	</table>
+																</div>
+															</div>
+														</details>
+													);
+												})}
+											</div>
+										)}
+									</section>
+								);
+							})}
+						</div>
+					) : (
+						<div class="body markdown-body" set:html={markdownView.html}></div>
+					)}
 				</article>
 			</div>
 		)}
@@ -248,8 +374,8 @@ const relatedArticles = normalizeRelatedArticles(page);
 </Layout>
 
 <script>
-	const headingNodes = Array.from(
-		document.querySelectorAll('.markdown-body h1[id], .markdown-body h2[id], .markdown-body h3[id]')
+	const headingNodes = Array.from(document.querySelectorAll('article [id]')).filter(
+		(node) => node instanceof HTMLElement && /^H[1-3]$/.test(node.tagName)
 	);
 	const tocLinks = Array.from(document.querySelectorAll('.toc-link'));
 
@@ -388,6 +514,20 @@ const relatedArticles = normalizeRelatedArticles(page);
 		padding: 1.3rem;
 	}
 
+	.article-header {
+		display: grid;
+		gap: 1.2rem;
+		align-items: start;
+	}
+
+	.article-header--with-hero {
+		grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+	}
+
+	.article-header__content {
+		min-width: 0;
+	}
+
 	.meta {
 		display: flex;
 		gap: 0.7rem;
@@ -404,14 +544,194 @@ const relatedArticles = normalizeRelatedArticles(page);
 		color: var(--color-text);
 	}
 
+	.article-ratings {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem 1rem;
+		margin: 0.2rem 0 0.8rem;
+		padding: 0.85rem 1rem;
+		border: 1px solid var(--color-border);
+		background: color-mix(in oklab, var(--color-surface) 94%, white);
+	}
+
+	.article-ratings p {
+		margin: 0;
+		font-size: 0.95rem;
+		color: var(--color-text);
+	}
+
+	.article-summary {
+		margin: 0;
+		font-size: 1.05rem;
+		line-height: 1.7;
+		color: color-mix(in oklab, var(--color-text) 88%, white);
+	}
+
 	.body {
-		margin-top: 1rem;
+		margin-top: 1.4rem;
 		color: var(--color-text);
 		line-height: 1.65;
 	}
 
-	.body p {
+	.hero-figure,
+	.section-figure {
+		margin: 0;
+	}
+
+	.hero-figure img,
+	.section-figure img {
+		display: block;
+		width: 100%;
+		height: auto;
+		border: 1px solid var(--color-border);
+	}
+
+	.hero-figure figcaption,
+	.section-figure figcaption {
+		margin-top: 0.45rem;
+		font-size: 0.88rem;
+		color: var(--color-muted);
+	}
+
+	.structured-body {
+		display: grid;
+		gap: 1.6rem;
+	}
+
+	.article-section {
+		padding-top: 0.6rem;
+		border-top: 1px solid color-mix(in oklab, var(--color-border) 82%, transparent);
+		scroll-margin-top: 6.8rem;
+	}
+
+	.article-section:first-child {
+		padding-top: 0;
+		border-top: 0;
+	}
+
+	.article-section__heading {
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
 		margin: 0 0 0.9rem;
+		font-size: clamp(1.35rem, 3vw, 1.8rem);
+		line-height: 1.2;
+		color: var(--color-text);
+	}
+
+	.article-section__layout {
+		display: block;
+	}
+
+	.article-section__layout::after {
+		content: '';
+		display: table;
+		clear: both;
+	}
+
+	.section-figure {
+		width: min(var(--section-image-width, 38%), 100%);
+	}
+
+	.section-figure--left {
+		float: left;
+		margin: 0.15rem 1.2rem 0.9rem 0;
+	}
+
+	.section-figure--right {
+		float: right;
+		margin: 0.15rem 0 0.9rem 1.2rem;
+	}
+
+	.section-figure--small {
+		max-width: 320px;
+	}
+
+	.section-figure--medium {
+		max-width: 460px;
+	}
+
+	.section-figure--large {
+		max-width: 620px;
+	}
+
+	.section-copy {
+		min-width: 0;
+	}
+
+	.section-copy > :first-child {
+		margin-top: 0;
+	}
+
+	.evidence-groups {
+		margin-top: 1rem;
+		display: grid;
+		gap: 0.85rem;
+	}
+
+	.evidence-dropdown {
+		border: 1px solid var(--color-border);
+		background: color-mix(in oklab, var(--color-surface) 94%, white);
+	}
+
+	.evidence-dropdown summary {
+		cursor: pointer;
+		padding: 0.9rem 1rem;
+		font-weight: 700;
+		list-style: none;
+	}
+
+	.evidence-dropdown summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.evidence-dropdown summary::after {
+		content: '+';
+		float: right;
+		font-size: 1.1rem;
+		line-height: 1;
+	}
+
+	.evidence-dropdown[open] summary::after {
+		content: '-';
+	}
+
+	.evidence-dropdown__content {
+		padding: 0 1rem 1rem;
+	}
+
+	.evidence-intro {
+		margin: 0 0 0.8rem;
+		color: var(--color-muted);
+	}
+
+	.evidence-table-wrap {
+		overflow-x: auto;
+	}
+
+	.evidence-table {
+		width: 100%;
+		border-collapse: collapse;
+		min-width: 640px;
+		font-size: 0.94rem;
+	}
+
+	.evidence-table th,
+	.evidence-table td {
+		padding: 0.75rem;
+		border: 1px solid var(--color-border);
+		text-align: left;
+		vertical-align: top;
+	}
+
+	.evidence-table thead th {
+		background: color-mix(in oklab, var(--color-surface) 84%, black 4%);
+		font-size: 0.8rem;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--color-muted);
+	}
+
+	.evidence-table tbody td {
+		background: color-mix(in oklab, var(--color-surface) 96%, white);
 	}
 
 	.markdown-body h1,
@@ -517,6 +837,19 @@ const relatedArticles = normalizeRelatedArticles(page);
 
 		.related {
 			order: 3;
+		}
+
+		.article-header--with-hero {
+			grid-template-columns: 1fr;
+		}
+
+		.section-figure,
+		.section-figure--left,
+		.section-figure--right {
+			float: none;
+			width: 100%;
+			max-width: none;
+			margin: 0 0 1rem;
 		}
 	}
 </style>

@@ -1,0 +1,109 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+	title="Subscribe | Metadata"
+	description="Subscribe for updates when new health and nutrition articles are published."
+>
+	<main class="subscribe-shell">
+		<section class="subscribe-card">
+			<p class="eyebrow">Stay Updated</p>
+			<h1>Subscribe</h1>
+			<p class="lede">
+				Get notified when new reviews, study breakdowns, and nutrition notes are added to Metadata.
+			</p>
+			<form class="subscribe-form" method="post" action="#">
+				<label class="field">
+					<span>Email</span>
+					<input type="email" name="email" placeholder="you@example.com" />
+				</label>
+				<label class="field">
+					<span>Name</span>
+					<input type="text" name="name" placeholder="Optional" />
+				</label>
+				<button type="submit">Join the list</button>
+			</form>
+			<p class="note">
+				This is a placeholder subscribe page. Wire the form action to your email provider when you are ready.
+			</p>
+		</section>
+	</main>
+</Layout>
+
+<style>
+	.subscribe-shell {
+		width: min(900px, calc(100vw - 2rem));
+		margin: 0 auto;
+		padding: 2rem 0 3rem;
+	}
+
+	.subscribe-card {
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		padding: clamp(1.2rem, 3vw, 2rem);
+	}
+
+	.eyebrow {
+		margin: 0 0 0.4rem;
+		font-size: 0.72rem;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--color-accent);
+		font-weight: 700;
+	}
+
+	h1 {
+		margin: 0;
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		font-size: clamp(2rem, 5vw, 3rem);
+		color: var(--color-text);
+	}
+
+	.lede,
+	.note {
+		color: var(--color-muted);
+		line-height: 1.65;
+	}
+
+	.subscribe-form {
+		display: grid;
+		gap: 0.9rem;
+		margin-top: 1.2rem;
+	}
+
+	.field {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.field span {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: var(--color-text);
+	}
+
+	.field input {
+		padding: 0.75rem 0.85rem;
+		border: 1px solid var(--color-border);
+		background: var(--color-bg);
+		color: var(--color-text);
+		font-size: 1rem;
+	}
+
+	button {
+		width: fit-content;
+		padding: 0.75rem 1rem;
+		border: 1px solid var(--color-accent);
+		background: var(--color-accent);
+		color: #fff;
+		font-size: 0.95rem;
+		font-weight: 700;
+		cursor: pointer;
+	}
+
+	button:hover {
+		background: var(--color-accent-hover);
+		border-color: var(--color-accent-hover);
+	}
+ </style>

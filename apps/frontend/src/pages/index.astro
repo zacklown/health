@@ -4,21 +4,29 @@ import heroBackground from '../assets/Hero background.jpg';
 
 const heroBackgroundUrl = typeof heroBackground === 'string' ? heroBackground : heroBackground.src;
 
-const subjectAreas = ['Foundations', 'Principles', 'Foods', 'Supplements', 'Diets', 'Studies'] as const;
-type SubjectArea = (typeof subjectAreas)[number];
-
 type CmsMedia = {
 	url?: string;
 	alt?: string;
 };
 
-type FeaturedArticle = {
-	subject: SubjectArea;
+type RelatedPage = {
+	title?: string;
+	slug?: string;
+	summary?: string;
+	featureImage?: CmsMedia | null;
+	heroImage?: CmsMedia | null;
+};
+
+type FeaturedSection = {
+	eyebrow: string;
 	title: string;
 	slug: string;
 	summary: string;
 	imageUrl?: string;
 	imageAlt?: string;
+	imagePlacement: 'left' | 'right';
+	imageSize: 'small' | 'medium' | 'large';
+	imageWidth: string;
 };
 
 type HomeAbout = {
@@ -44,10 +52,6 @@ function getStringValue(value: unknown): string | null {
 	if (typeof value !== 'string') return null;
 	const trimmed = value.trim();
 	return trimmed.length ? trimmed : null;
-}
-
-function isSubjectArea(value: unknown): value is SubjectArea {
-	return typeof value === 'string' && (subjectAreas as readonly string[]).includes(value);
 }
 
 function resolveMediaUrl(url: string): string {
@@ -80,77 +84,79 @@ function parseMediaAsset(raw: unknown): { imageUrl?: string; imageAlt?: string }
 	};
 }
 
-async function fetchHomeData(): Promise<{ about: HomeAbout; featuredArticles: FeaturedArticle[] }> {
+function resolveFeaturedMedia(...sources: unknown[]): { imageUrl?: string; imageAlt?: string } {
+	for (const source of sources) {
+		const media = parseMediaAsset(source);
+		if (media.imageUrl) return media;
+	}
+
+	return {};
+}
+
+function buildFeaturedSection(raw: any): FeaturedSection | null {
+	if (!raw || typeof raw !== 'object') return null;
+
+	const article = raw.article && typeof raw.article === 'object' ? (raw.article as RelatedPage) : null;
+	const slug = getStringValue(article?.slug);
+	const title = getStringValue(article?.title);
+	if (!slug || !title) return null;
+
+	const media = resolveFeaturedMedia(raw.imageOverride, article?.featureImage, article?.heroImage);
+	const imagePlacement = getStringValue(raw.imagePlacement) === 'left' ? 'left' : 'right';
+	const imageSize = ['small', 'medium', 'large'].includes(getStringValue(raw.imageSize) || '')
+		? ((getStringValue(raw.imageSize) as 'small' | 'medium' | 'large'))
+		: 'medium';
+	const imageWidth = ['25', '30', '35', '38', '40', '45', '50', '55', '60'].includes(
+		getStringValue(raw.imageWidth) || ''
+	)
+		? (getStringValue(raw.imageWidth) as string)
+		: '38';
+
+	return {
+		eyebrow: getStringValue(raw.eyebrow) || 'Featured Article',
+		title,
+		slug,
+		summary:
+			getStringValue(raw.summaryOverride) ||
+			getStringValue(article?.summary) ||
+			'Open this article to read the full breakdown, references, and practical notes.',
+		imagePlacement,
+		imageSize,
+		imageWidth,
+		...media,
+	};
+}
+
+async function fetchHomeData(): Promise<{ about: HomeAbout; featuredSections: FeaturedSection[] }> {
 	for (const baseUrl of cmsBaseUrls) {
 		try {
-			const [homeRes, featuredRes] = await Promise.all([
-				fetch(`${baseUrl}/api/globals/home-page?depth=1`),
-				fetch(`${baseUrl}/api/pages?depth=1&limit=200&sort=-updatedAt`),
-			]);
+			const homeRes = await fetch(`${baseUrl}/api/globals/home-page?depth=2`);
+			if (!homeRes.ok) continue;
 
-			const about = { ...defaultAbout };
-			if (homeRes.ok) {
-				const homeData = await homeRes.json();
-				const aboutData = homeData?.about;
-				about.eyebrow = getStringValue(aboutData?.eyebrow) || defaultAbout.eyebrow;
-				about.title = getStringValue(aboutData?.title) || defaultAbout.title;
-				about.description = getStringValue(aboutData?.description) || defaultAbout.description;
-			}
+			const homeData = await homeRes.json();
+			const aboutData = homeData?.about;
+			const about = {
+				eyebrow: getStringValue(aboutData?.eyebrow) || defaultAbout.eyebrow,
+				title: getStringValue(aboutData?.title) || defaultAbout.title,
+				description: getStringValue(aboutData?.description) || defaultAbout.description,
+			};
 
-			const featuredArticles: FeaturedArticle[] = [];
-			if (featuredRes.ok) {
-				const featuredData = await featuredRes.json();
-				const docs = Array.isArray(featuredData?.docs) ? featuredData.docs : [];
+			const featuredSections = Array.isArray(homeData?.featuredSections)
+				? homeData.featuredSections
+						.map(buildFeaturedSection)
+						.filter((item): item is FeaturedSection => Boolean(item))
+				: [];
 
-				for (const rawDoc of docs) {
-					if (rawDoc?.featureOnHome !== true) continue;
-
-					const subject = rawDoc?.homeSubject ?? rawDoc?.category;
-					if (!isSubjectArea(subject)) continue;
-
-					const title = getStringValue(rawDoc?.title);
-					const slug = getStringValue(rawDoc?.slug);
-					if (!title || !slug) continue;
-
-					const summary =
-						getStringValue(rawDoc?.summary) ||
-						'Open this article to read the full breakdown, references, and practical notes.';
-					const media = parseMediaAsset(rawDoc?.featureImage);
-
-					featuredArticles.push({
-						subject,
-						title,
-						slug,
-						summary,
-						...media,
-					});
-				}
-			}
-
-			return { about, featuredArticles };
+			return { about, featuredSections };
 		} catch (_) {
-			// Try the next base URL.
+			// Try next base URL.
 		}
 	}
 
-	return { about: defaultAbout, featuredArticles: [] };
+	return { about: defaultAbout, featuredSections: [] };
 }
 
-const { about, featuredArticles } = await fetchHomeData();
-
-const featuredBySubject = subjectAreas.reduce(
-	(acc, subject) => {
-		acc[subject] = null;
-		return acc;
-	},
-	{} as Record<SubjectArea, FeaturedArticle | null>
-);
-
-for (const article of featuredArticles) {
-	if (!featuredBySubject[article.subject]) {
-		featuredBySubject[article.subject] = article;
-	}
-}
+const { about, featuredSections } = await fetchHomeData();
 ---
 
 <Layout title="Metadata" description="Personal health wiki for structured reviews and study notes.">
@@ -176,39 +182,30 @@ for (const article of featuredArticles) {
 				</div>
 			</section>
 
-			{subjectAreas.map((subject, index) => {
-				const article = featuredBySubject[subject];
-				const eyebrow = `Featured ${subject} Article`;
-
-				return (
-					<section class={`block subject-card ${index % 2 === 1 ? 'reverse' : ''}`}>
-						<div class="subject-card__content">
-							<p class="eyebrow">{eyebrow}</p>
-							<h2>{article?.title || `Set a featured ${subject.toLowerCase()} article in CMS`}</h2>
-							<p>
-								{article?.summary ||
-									`Open an article in CMS, enable "featureOnHome", set Home Subject to "${subject}", and save to display it here.`}
-							</p>
-							{article ? (
-								<a class="read-button" href={`/${encodeURIComponent(article.slug)}`}>Read Article</a>
-							) : (
-								<span class="read-button read-button--disabled">Awaiting Featured Article</span>
-							)}
-						</div>
-						<div class="subject-card__image">
-							{article?.imageUrl ? (
-								<img
-									src={article.imageUrl}
-									alt={article.imageAlt || `${subject} featured article image`}
-									loading="lazy"
-								/>
-							) : (
-								<div class="subject-card__placeholder">{subject}</div>
-							)}
-						</div>
-					</section>
-				);
-			})}
+			{featuredSections.map((section) => (
+				<section
+					class={`block subject-card subject-card--${section.imagePlacement} subject-card--${section.imageSize}`}
+					style={`--home-image-width: ${section.imageWidth}%;`}
+				>
+					<div class="subject-card__content">
+						<p class="eyebrow">{section.eyebrow}</p>
+						<h2>{section.title}</h2>
+						<p>{section.summary}</p>
+						<a class="read-button" href={`/${encodeURIComponent(section.slug)}`}>Read Article</a>
+					</div>
+					<div class="subject-card__image">
+						{section.imageUrl ? (
+							<img
+								src={section.imageUrl}
+								alt={section.imageAlt || `${section.title} featured image`}
+								loading="lazy"
+							/>
+						) : (
+							<div class="subject-card__placeholder">{section.title}</div>
+						)}
+					</div>
+				</section>
+			))}
 		</main>
 	</div>
 </Layout>
@@ -347,18 +344,34 @@ for (const article of featuredArticles) {
 	}
 
 	.subject-card {
-		display: grid;
-		grid-template-columns: 1.05fr 0.95fr;
+		display: flex;
 		gap: 1rem;
 		align-items: stretch;
 	}
 
-	.subject-card.reverse .subject-card__content {
+	.subject-card__content {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
+	.subject-card--left .subject-card__content {
 		order: 2;
 	}
 
-	.subject-card.reverse .subject-card__image {
+	.subject-card--left .subject-card__image {
 		order: 1;
+	}
+
+	.subject-card--small .subject-card__image {
+		min-height: 190px;
+	}
+
+	.subject-card--medium .subject-card__image {
+		min-height: 230px;
+	}
+
+	.subject-card--large .subject-card__image {
+		min-height: 290px;
 	}
 
 	.subject-card__content h2 {
@@ -390,14 +403,11 @@ for (const article of featuredArticles) {
 		background: var(--accent-hover);
 	}
 
-	.read-button--disabled {
-		background: color-mix(in oklab, var(--muted) 40%, transparent);
-		color: var(--ink);
-		cursor: default;
-	}
-
 	.subject-card__image {
-		min-height: 230px;
+		flex: 0 0 var(--home-image-width, 38%);
+		width: var(--home-image-width, 38%);
+		max-width: min(100%, var(--home-image-width, 38%));
+		min-width: 180px;
 		border: 1px solid var(--line);
 		background: color-mix(in oklab, var(--card) 88%, transparent);
 		overflow: hidden;
@@ -432,17 +442,21 @@ for (const article of featuredArticles) {
 	}
 
 	@media (max-width: 900px) {
-		.subject-card,
-		.subject-card.reverse {
+		.subject-card {
+			display: grid;
 			grid-template-columns: 1fr;
 		}
 
-		.subject-card.reverse .subject-card__content,
-		.subject-card.reverse .subject-card__image {
+		.subject-card--left .subject-card__content,
+		.subject-card--left .subject-card__image {
 			order: initial;
 		}
 
 		.subject-card__image {
+			flex: initial;
+			width: 100%;
+			max-width: none;
+			min-width: 0;
 			min-height: 210px;
 		}
 	}
