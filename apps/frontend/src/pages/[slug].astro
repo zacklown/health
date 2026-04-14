@@ -44,6 +44,7 @@ type CmsPage = {
 	slug: string;
 	category?: string;
 	summary?: string;
+	showArticleRatings?: boolean | null;
 	rockRating?: string | null;
 	scientificEvidence?: string | null;
 	body?: string;
@@ -193,8 +194,11 @@ const structuredToc = buildStructuredToc(sections);
 const markdownView = renderMarkdownWithToc(page?.body || '');
 const tocItems = structuredToc.length > 0 ? structuredToc : markdownView.toc;
 const heroImage = getMediaData(page?.heroImage);
-const rockRatingLabel = getSelectLabel(page?.rockRating, rockRatingLabels);
-const scientificEvidenceLabel = getSelectLabel(page?.scientificEvidence, scientificEvidenceLabels);
+const showArticleRatings = page?.showArticleRatings !== false;
+const rockRatingLabel = showArticleRatings ? getSelectLabel(page?.rockRating, rockRatingLabels) : null;
+const scientificEvidenceLabel = showArticleRatings
+	? getSelectLabel(page?.scientificEvidence, scientificEvidenceLabels)
+	: null;
 const relatedArticles = normalizeRelatedArticles(page);
 ---
 
@@ -286,24 +290,26 @@ const relatedArticles = normalizeRelatedArticles(page);
 										) : (
 											<h2 class="article-section__heading">{section.heading || `Section ${index + 1}`}</h2>
 										)}
-										<div class="article-section__layout">
-											{sectionImage && (
-												<figure
-													class={`section-figure section-figure--${imagePlacement} section-figure--${imageSize}`}
-													style={`--section-image-width: ${imageWidth};`}
-												>
-													<img
-														src={sectionImage.url}
-														alt={sectionImage.alt || section.heading || `Section ${index + 1} image`}
-														loading="lazy"
-													/>
-													{section.imageCaption && <figcaption>{section.imageCaption}</figcaption>}
-												</figure>
-											)}
-											{section.body && (
-												<div class="section-copy markdown-body" set:html={renderMarkdown(section.body)} />
-											)}
-										</div>
+										{(sectionImage || section.body) && (
+											<div class="article-section__layout">
+												{sectionImage && (
+													<figure
+														class={`section-figure section-figure--${imagePlacement} section-figure--${imageSize}`}
+														style={`--section-image-width: ${imageWidth};`}
+													>
+														<img
+															src={sectionImage.url}
+															alt={sectionImage.alt || section.heading || `Section ${index + 1} image`}
+															loading="lazy"
+														/>
+														{section.imageCaption && <figcaption>{section.imageCaption}</figcaption>}
+													</figure>
+												)}
+												{section.body && (
+													<div class="section-copy markdown-body" set:html={renderMarkdown(section.body)} />
+												)}
+											</div>
+										)}
 										{evidenceGroups.length > 0 && (
 											<div class="evidence-groups">
 												{evidenceGroups.map((group) => {

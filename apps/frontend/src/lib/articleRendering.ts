@@ -22,12 +22,24 @@ export function slugifyHeading(text: string): string {
 		.replace(/-+/g, '-');
 }
 
+export function getDictionaryLetter(slug: string): string {
+	const normalized = slugifyHeading(slug);
+	const firstCharacter = normalized.charAt(0).toUpperCase();
+	return /^[A-Z]$/.test(firstCharacter) ? firstCharacter : '#';
+}
+
+export function buildDictionaryAnchor(slug: string): string {
+	const normalized = slugifyHeading(slug) || 'term';
+	const letter = getDictionaryLetter(normalized).toLowerCase().replace(/[^a-z0-9]/g, 'other');
+	return `${letter}-${normalized}`;
+}
+
 function renderTermLinks(text: string): string {
 	const bracketSyntaxLinked = text.replace(/\[\[([a-z0-9][a-z0-9-]{0,63})\]\]/gi, (match, rawTag) => {
 		const tag = String(rawTag || '');
 		if (!tag) return match;
 		const slug = tag.toLowerCase();
-		return `<a class="term-link" href="/dictionary#${encodeURIComponent(slug)}">${tag}</a>`;
+		return `<a class="term-link" href="/dictionary#${encodeURIComponent(buildDictionaryAnchor(slug))}">${tag}</a>`;
 	});
 
 	return bracketSyntaxLinked.replace(/(^|[\s(>])#([a-z0-9][a-z0-9-]{0,63})\b/gi, (match, prefix, rawTag) => {
@@ -35,7 +47,7 @@ function renderTermLinks(text: string): string {
 		if (!tag) return match;
 		if (/^[0-9a-f]{3}([0-9a-f]{3})?$/i.test(tag)) return match;
 		const slug = tag.toLowerCase();
-		return `${prefix}<a class="term-link" href="/dictionary#${encodeURIComponent(slug)}">${tag}</a>`;
+		return `${prefix}<a class="term-link" href="/dictionary#${encodeURIComponent(buildDictionaryAnchor(slug))}">${tag}</a>`;
 	});
 }
 

@@ -139,8 +139,28 @@ const defaultNavItems: NavItem[] = [
 		]
 	},
 	{ type: 'link', label: 'About', href: '/about' },
+	{ type: 'link', label: 'New', href: '/new', variant: 'button' },
 	{ type: 'link', label: 'Subscribe', href: '/subscribe', variant: 'button' }
 ];
+
+function ensureUtilityButtons(items: NavItem[]): NavItem[] {
+	const normalizedItems = [...items];
+	const existingLabels = new Set(
+		normalizedItems
+			.map((item) => item.label.trim().toLowerCase())
+			.filter(Boolean)
+	);
+
+	if (!existingLabels.has('new')) {
+		normalizedItems.push({ type: 'link', label: 'New', href: '/new', variant: 'button' });
+	}
+
+	if (!existingLabels.has('subscribe')) {
+		normalizedItems.push({ type: 'link', label: 'Subscribe', href: '/subscribe', variant: 'button' });
+	}
+
+	return normalizedItems;
+}
 
 type CmsResponse = {
 	doc?: {
@@ -284,7 +304,7 @@ function parseCmsNavPayload(payload: any): { announcement: typeof defaultAnnounc
 
 	return {
 		announcement: announcement || defaultAnnouncement,
-		items: items.length ? items : defaultNavItems
+		items: ensureUtilityButtons(items.length ? items : defaultNavItems)
 	};
 }
 
@@ -323,7 +343,7 @@ async function loadNavConfig() {
 		}
 	}
 
-	return { announcement: defaultAnnouncement, items: defaultNavItems };
+	return { announcement: defaultAnnouncement, items: ensureUtilityButtons(defaultNavItems) };
 }
 
 const cmsNavConfig = await loadNavConfig();

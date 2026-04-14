@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { buildDictionaryAnchor, getDictionaryLetter } from '../lib/articleRendering';
 export const prerender = false;
 
 type DictionaryAlias = {
@@ -29,14 +30,10 @@ function normalizeEntries(input: unknown): DictionaryEntry[] {
 		.filter((entry) => typeof entry.slug === 'string' && typeof entry.term === 'string');
 }
 
-function toHashSlug(input: string): string {
-	return input
-		.toLowerCase()
-		.trim()
-		.replace(/[^a-z0-9\s-]/g, '')
-		.replace(/\s+/g, '-')
-		.replace(/-+/g, '-');
-}
+type DictionaryGroup = {
+	letter: string;
+	entries: DictionaryEntry[];
+};
 
 async function fetchDictionaryEntries(): Promise<DictionaryEntry[]> {
 	for (const baseUrl of cmsBaseUrls) {
@@ -58,6 +55,20 @@ async function fetchDictionaryEntries(): Promise<DictionaryEntry[]> {
 }
 
 const entries = await fetchDictionaryEntries();
+const groupedEntries = entries.reduce<DictionaryGroup[]>((groups, entry) => {
+	const slug = typeof entry.slug === 'string' ? entry.slug : '';
+	const letter = getDictionaryLetter(slug);
+	const existingGroup = groups.find((group) => group.letter === letter);
+	if (existingGroup) {
+		existingGroup.entries.push(entry);
+		return groups;
+	}
+
+	groups.push({ letter, entries: [entry] });
+	return groups;
+}, []);
+
+const letterGroups = groupedEntries.filter((group) => /^[A-Z]$/.test(group.letter));
 ---
 
 <Layout title="Dictionary | Health Atlas" description="Dictionary of terms used across the site.">
@@ -74,48 +85,76 @@ const entries = await fetchDictionaryEntries();
 				<h2>No dictionary entries yet. The CMS is probably down.</h2>
 			</section>
 		) : (
-			<section class="entries" aria-label="Dictionary entries">
-				{entries.map((entry) => (
-					<article id={entry.slug} class="entry-card">
-						<header>
-							<h2>{entry.term}</h2>
-							<p class="hash-link">
-								<a href={`#${entry.slug}`}>#{entry.slug}</a>
-							</p>
-						</header>
-						{Array.isArray(entry.aliases) && entry.aliases.length > 0 && (
-							<p class="aliases">
-								Aliases:{' '}
-								{entry.aliases
-									.map((alias) => alias?.value?.trim())
-									.filter(Boolean)
-									.map((alias, index, all) => (
-										<>
-											<code>#{alias}</code>
-											{index < all.length - 1 ? ', ' : ''}
-										</>
-									))}
-							</p>
-						)}
-						{Array.isArray(entry.aliases) &&
-							entry.aliases
-								.map((alias) => toHashSlug(alias?.value || ''))
-								.filter((alias) => alias && alias !== entry.slug)
-								.map((alias) => <span id={alias} class="alias-anchor" aria-hidden="true"></span>)}
-						<p class="definition">{entry.definition}</p>
-						{entry.fullArticle &&
-							typeof entry.fullArticle === 'object' &&
-							entry.fullArticle.slug &&
-							entry.fullArticle.title && (
-								<p class="full-article-link">
-									<a href={`/${encodeURIComponent(entry.fullArticle.slug)}`}>
-										Go to Full Article &rarr;
-									</a>
-								</p>
-							)}
-					</article>
-				))}
-			</section>
+			<>
+				{letterGroups.length > 0 && (
+					<nav class="dictionary-toc" aria-label="Dictionary letter index">
+						<p>Jump to letter</p>
+						<ul>
+							{letterGroups.map((group) => (
+								<li><a href={`#letter-${group.letter.toLowerCase()}`}>{group.letter}</a></li>
+							))}
+						</ul>
+					</nav>
+				)}
+				<section class="entries" aria-label="Dictionary entries">
+					{groupedEntries.map((group) => (
+						<section class="letter-group" aria-labelledby={`letter-${group.letter.toLowerCase()}`}>
+							<h2 id={`letter-${group.letter.toLowerCase()}`} class="letter-heading">
+								{group.letter}
+							</h2>
+							<div class="letter-group__entries">
+								{group.entries.map((entry) => {
+									const entrySlug = typeof entry.slug === 'string' ? entry.slug : '';
+									const entryAnchor = buildDictionaryAnchor(entrySlug);
+
+									return (
+										<article id={entryAnchor} class="entry-card">
+											<header>
+												<h3>{entry.term}</h3>
+												<p class="hash-link">
+													<a href={`#${entryAnchor}`}>#{entry.slug}</a>
+												</p>
+											</header>
+											{Array.isArray(entry.aliases) && entry.aliases.length > 0 && (
+												<p class="aliases">
+													Aliases:{' '}
+													{entry.aliases
+														.map((alias) => alias?.value?.trim())
+														.filter(Boolean)
+														.map((alias, index, all) => (
+															<>
+																<code>#{alias}</code>
+																{index < all.length - 1 ? ', ' : ''}
+															</>
+														))}
+												</p>
+											)}
+											{Array.isArray(entry.aliases) &&
+												entry.aliases
+													.map((alias) => alias?.value?.trim() || '')
+													.filter(Boolean)
+													.map((alias) => buildDictionaryAnchor(alias))
+													.filter((alias) => alias && alias !== entryAnchor)
+													.map((alias) => <span id={alias} class="alias-anchor" aria-hidden="true"></span>)}
+											<p class="definition">{entry.definition}</p>
+											{entry.fullArticle &&
+												typeof entry.fullArticle === 'object' &&
+												entry.fullArticle.slug &&
+												entry.fullArticle.title && (
+													<p class="full-article-link">
+														<a href={`/${encodeURIComponent(entry.fullArticle.slug)}`}>
+															Go to Full Article &rarr;
+														</a>
+													</p>
+												)}
+										</article>
+									);
+								})}
+							</div>
+						</section>
+					))}
+				</section>
+			</>
 		)}
 	</main>
 </Layout>
@@ -164,6 +203,69 @@ const entries = await fetchDictionaryEntries();
 	.entries {
 		margin-top: 1rem;
 		display: grid;
+		gap: 1.2rem;
+	}
+
+	.dictionary-toc {
+		margin-top: 1rem;
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		padding: 0.95rem 1rem;
+	}
+
+	.dictionary-toc p {
+		margin: 0;
+		font-size: 0.8rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-muted);
+	}
+
+	.dictionary-toc ul {
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.55rem;
+		margin: 0.8rem 0 0;
+		padding: 0;
+	}
+
+	.dictionary-toc a {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 2.2rem;
+		padding: 0.4rem 0.55rem;
+		border: 1px solid var(--color-border);
+		background: color-mix(in oklab, var(--color-surface) 94%, white);
+		color: var(--color-text);
+		text-decoration: none;
+		font-weight: 700;
+	}
+
+	.dictionary-toc a:hover {
+		color: var(--color-accent);
+		border-color: color-mix(in oklab, var(--color-accent) 45%, var(--color-border));
+	}
+
+	.letter-group {
+		display: grid;
+		gap: 0.7rem;
+	}
+
+	.letter-heading {
+		margin: 0;
+		padding-bottom: 0.45rem;
+		border-bottom: 1px solid var(--color-border);
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		font-size: 1.6rem;
+		color: var(--color-text);
+		scroll-margin-top: 7rem;
+	}
+
+	.letter-group__entries {
+		display: grid;
 		gap: 0.9rem;
 	}
 
@@ -181,7 +283,7 @@ const entries = await fetchDictionaryEntries();
 		gap: 1rem;
 	}
 
-	h2 {
+	.entry-card h3 {
 		margin: 0;
 		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
 		font-size: 1.4rem;

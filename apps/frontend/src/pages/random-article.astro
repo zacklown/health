@@ -3,6 +3,7 @@ export const prerender = false;
 
 type CmsPage = {
 	slug?: string;
+	excludeFromRandom?: boolean | null;
 };
 
 const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
@@ -17,6 +18,7 @@ async function getRandomArticleSlug(): Promise<string | null> {
 			const data = await res.json();
 			const docs = Array.isArray(data?.docs) ? (data.docs as CmsPage[]) : [];
 			const slugs = docs
+				.filter((doc) => doc?.excludeFromRandom !== true)
 				.map((doc) => (typeof doc.slug === 'string' ? doc.slug.trim() : ''))
 				.filter((value) => value.length > 0);
 			if (!slugs.length) continue;

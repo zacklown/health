@@ -57,12 +57,11 @@ const articleSectionFields: NonNullable<CollectionConfig['fields']>[number][] = 
   {
     name: 'body',
     type: 'code',
-    required: true,
     defaultValue: '',
     admin: {
       language: 'markdown',
       description:
-        'Section content in Markdown. Use this for the main written explanation under the section heading.',
+        'Optional section content in Markdown. Leave blank when a heading is only used to introduce nested subsections.',
     },
   },
   {
@@ -280,30 +279,52 @@ export const Pages: CollectionConfig = {
       type: 'row',
       fields: [
         {
+          name: 'showArticleRatings',
+          label: 'Show ROCK / Scientific Evidence ratings',
+          type: 'checkbox',
+          defaultValue: true,
+          required: true,
+          admin: {
+            width: '100%',
+            description:
+              'Turn this off for site-information pages and other articles that should not display the rating badges.',
+          },
+        },
+        {
           name: 'rockRating',
           label: 'ROCK Rating',
           type: 'select',
-          required: true,
           defaultValue: 'medium-rock',
           options: rockRatingScale.map(({ label, value }) => ({ label, value })),
           index: true,
           admin: {
             width: '50%',
+            condition: (_, siblingData) => siblingData?.showArticleRatings !== false,
             description:
               'Overall practical recommendation strength using your Low-Pebble to High-Boulder scale.',
+          },
+          validate: (value, { siblingData }) => {
+            if (siblingData?.showArticleRatings === false) return true
+            if (typeof value === 'string' && value.trim()) return true
+            return 'Choose a ROCK Rating or disable article ratings for this page.'
           },
         },
         {
           name: 'scientificEvidence',
           label: 'Scientific Evidence',
           type: 'select',
-          required: true,
           defaultValue: 'moderate',
           options: scientificEvidenceScale.map(({ label, value }) => ({ label, value })),
           index: true,
           admin: {
             width: '50%',
+            condition: (_, siblingData) => siblingData?.showArticleRatings !== false,
             description: 'Overall confidence in the evidence base from Low to High.',
+          },
+          validate: (value, { siblingData }) => {
+            if (siblingData?.showArticleRatings === false) return true
+            if (typeof value === 'string' && value.trim()) return true
+            return 'Choose a Scientific Evidence rating or disable article ratings for this page.'
           },
         },
       ],
@@ -319,7 +340,10 @@ export const Pages: CollectionConfig = {
       },
       hooks: {
         beforeValidate: [
-          ({ siblingData }) => getScaleScore(siblingData?.rockRating, rockRatingScale),
+          ({ siblingData }) =>
+            siblingData?.showArticleRatings === false
+              ? null
+              : getScaleScore(siblingData?.rockRating, rockRatingScale),
         ],
       },
     },
@@ -335,7 +359,9 @@ export const Pages: CollectionConfig = {
       hooks: {
         beforeValidate: [
           ({ siblingData }) =>
-            getScaleScore(siblingData?.scientificEvidence, scientificEvidenceScale),
+            siblingData?.showArticleRatings === false
+              ? null
+              : getScaleScore(siblingData?.scientificEvidence, scientificEvidenceScale),
         ],
       },
     },
@@ -386,6 +412,14 @@ export const Pages: CollectionConfig = {
       defaultValue: true,
       admin: {
         description: 'Flag to highlight this item in the New section.',
+      },
+    },
+    {
+      name: 'excludeFromRandom',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Exclude this article from the random article button and random article page.',
       },
     },
     {
