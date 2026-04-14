@@ -11,23 +11,6 @@ const articleTypes = [
 	'General',
 ];
 
-const newsletterOptions = [
-	{
-		id: 'newsletter-weekly',
-		label: 'Weekly digest',
-		description: 'A regular roundup of the newest posts and notable updates.',
-	},
-	{
-		id: 'newsletter-monthly',
-		label: 'Monthly newsletter',
-		description: 'A broader summary with site notes, highlights, and editorial context.',
-	},
-	{
-		id: 'newsletter-site',
-		label: 'Site announcements',
-		description: 'Major changes to the site, tools, dictionary, and publishing cadence.',
-	},
-];
 ---
 
 <Layout
@@ -46,7 +29,6 @@ const newsletterOptions = [
 					</p>
 				</div>
 				<div class="top-actions">
-					<a class="top-actions__button top-actions__button--secondary" href="/new">New Articles</a>
 					<a class="top-actions__button" href="#subscription-form">Subscribe</a>
 				</div>
 			</div>
@@ -71,7 +53,13 @@ const newsletterOptions = [
 				<fieldset class="option-group">
 					<legend>Article alerts</legend>
 					<label class="option-card">
-						<input type="checkbox" name="article-alerts" value="all-new-articles" checked />
+						<input
+							type="checkbox"
+							name="article-alerts"
+							value="all-new-articles"
+							id="all-new-articles"
+							checked
+						/>
 						<span>
 							<strong>All new articles</strong>
 							<small>Get notified whenever any new article is published.</small>
@@ -84,7 +72,7 @@ const newsletterOptions = [
 					<div class="option-grid">
 						{articleTypes.map((type) => (
 							<label class="option-card">
-								<input type="checkbox" name="article-types" value={type} />
+								<input type="checkbox" name="article-types" value={type} class="article-type-checkbox" checked />
 								<span>{type}</span>
 							</label>
 						))}
@@ -92,17 +80,15 @@ const newsletterOptions = [
 				</fieldset>
 
 				<fieldset class="option-group">
-					<legend>Newsletter options</legend>
+					<legend>Newsletter</legend>
 					<div class="option-stack">
-						{newsletterOptions.map((option) => (
-							<label class="option-card option-card--detailed">
-								<input type="checkbox" name="newsletter-options" value={option.label} />
-								<span>
-									<strong>{option.label}</strong>
-									<small>{option.description}</small>
-								</span>
-							</label>
-						))}
+						<label class="option-card option-card--detailed">
+							<input type="checkbox" name="newsletter-options" value="Newsletter" />
+							<span>
+								<strong>Newsletter</strong>
+								<small>General editorial updates, announcements, and broader site roundups.</small>
+							</span>
+						</label>
 					</div>
 				</fieldset>
 
@@ -115,6 +101,42 @@ const newsletterOptions = [
 		</section>
 	</main>
 </Layout>
+
+<script>
+	const allNewArticlesCheckbox = document.querySelector('#all-new-articles');
+	const articleTypeCheckboxes = Array.from(document.querySelectorAll('.article-type-checkbox'));
+
+	if (allNewArticlesCheckbox instanceof HTMLInputElement && articleTypeCheckboxes.length > 0) {
+		const syncArticleTypes = (checked) => {
+			articleTypeCheckboxes.forEach((checkbox) => {
+				if (checkbox instanceof HTMLInputElement) {
+					checkbox.checked = checked;
+				}
+			});
+		};
+
+		const syncMasterCheckbox = () => {
+			const allChecked = articleTypeCheckboxes.every(
+				(checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked
+			);
+			allNewArticlesCheckbox.checked = allChecked;
+			allNewArticlesCheckbox.indeterminate = !allChecked && articleTypeCheckboxes.some(
+				(checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked
+			);
+		};
+
+		allNewArticlesCheckbox.addEventListener('change', () => {
+			allNewArticlesCheckbox.indeterminate = false;
+			syncArticleTypes(allNewArticlesCheckbox.checked);
+		});
+
+		articleTypeCheckboxes.forEach((checkbox) => {
+			checkbox.addEventListener('change', syncMasterCheckbox);
+		});
+
+		syncMasterCheckbox();
+	}
+</script>
 
 <style>
 	.subscribe-shell {
@@ -154,11 +176,6 @@ const newsletterOptions = [
 		font-size: 0.95rem;
 		font-weight: 700;
 		text-decoration: none;
-	}
-
-	.top-actions__button--secondary {
-		background: transparent;
-		color: var(--color-accent);
 	}
 
 	.top-actions__button:hover {

@@ -13,6 +13,10 @@ type RelatedPage = {
 	title?: string;
 	slug?: string;
 	summary?: string;
+	category?: string;
+	isNew?: boolean | null;
+	updatedAt?: string;
+	createdAt?: string;
 	featureImage?: CmsMedia | null;
 	heroImage?: CmsMedia | null;
 };
@@ -33,6 +37,18 @@ type HomeAbout = {
 	eyebrow: string;
 	title: string;
 	description: string;
+};
+
+type NewArticleCard = {
+	title: string;
+	slug: string;
+	summary: string;
+	previewSummary: string;
+	hasExpandableSummary: boolean;
+	category: string;
+	updatedLabel: string;
+	imageUrl?: string;
+	imageAlt?: string;
 };
 
 const defaultAbout: HomeAbout = {
@@ -91,6 +107,23 @@ function resolveFeaturedMedia(...sources: unknown[]): { imageUrl?: string; image
 	}
 
 	return {};
+}
+
+function buildSummaryPreview(summary: string): { previewSummary: string; hasExpandableSummary: boolean } {
+	const normalizedSummary = summary.trim();
+	const estimatedTwoLineLimit = 18;
+	const wordCount = normalizedSummary.split(/\s+/).filter(Boolean).length;
+	if (wordCount <= estimatedTwoLineLimit && normalizedSummary.length <= 150) {
+		return {
+			previewSummary: normalizedSummary,
+			hasExpandableSummary: false,
+		};
+	}
+
+	return {
+		previewSummary: normalizedSummary,
+		hasExpandableSummary: true,
+	};
 }
 
 function buildFeaturedSection(raw: any): FeaturedSection | null {
@@ -156,7 +189,49 @@ async function fetchHomeData(): Promise<{ about: HomeAbout; featuredSections: Fe
 	return { about: defaultAbout, featuredSections: [] };
 }
 
+async function fetchNewArticles(): Promise<NewArticleCard[]> {
+	for (const baseUrl of cmsBaseUrls) {
+		try {
+			const params = new URLSearchParams({
+				limit: '200',
+				sort: '-updatedAt',
+			});
+			const res = await fetch(`${baseUrl}/api/pages?${params.toString()}`);
+			if (!res.ok) continue;
+
+			const data = await res.json();
+			const docs = Array.isArray(data?.docs) ? (data.docs as RelatedPage[]) : [];
+
+			return docs
+				.filter((article) => article?.isNew === true)
+				.filter((article) => getStringValue(article.slug) && getStringValue(article.title))
+				.map((article) => {
+					const media = resolveFeaturedMedia(article.featureImage, article.heroImage);
+					const summary =
+						getStringValue(article.summary) ||
+						'Open the article to read the full breakdown, references, and practical notes.';
+					const summaryPreview = buildSummaryPreview(summary);
+
+					return {
+						title: getStringValue(article.title) || 'Untitled article',
+						slug: getStringValue(article.slug) || '',
+						summary,
+						category: getStringValue(article.category) || 'General',
+						updatedLabel: new Date(article.updatedAt || article.createdAt || Date.now()).toLocaleDateString(),
+						...summaryPreview,
+						...media,
+					};
+				});
+		} catch (_) {
+			// Try next base URL.
+		}
+	}
+
+	return [];
+}
+
 const { about, featuredSections } = await fetchHomeData();
+const newArticles = await fetchNewArticles();
 ---
 
 <Layout title="Metadata" description="Personal health wiki for structured reviews and study notes.">
@@ -181,6 +256,59 @@ const { about, featuredSections } = await fetchHomeData();
 					<a class="about__button" href="/site-use">Site use</a>
 				</div>
 			</section>
+
+			{newArticles.length > 0 && (
+				<section class="block new-carousel" aria-label="New articles">
+					<div class="new-carousel__header">
+						<div>
+							<p class="eyebrow">New</p>
+							<h2>Recently Added Articles</h2>
+						</div>
+						<div class="new-carousel__controls">
+							<button class="new-carousel__arrow" type="button" data-direction="prev" aria-label="Show previous new articles">
+								&larr;
+							</button>
+							<button class="new-carousel__arrow" type="button" data-direction="next" aria-label="Show next new articles">
+								&rarr;
+							</button>
+						</div>
+					</div>
+					<div class="new-carousel__viewport">
+						<div class="new-carousel__track">
+							{newArticles.map((article) => (
+								<article class="new-carousel__card">
+									<div class="new-carousel__media">
+										{article.imageUrl ? (
+											<img
+												src={article.imageUrl}
+												alt={article.imageAlt || `${article.title} image`}
+												loading="lazy"
+											/>
+										) : (
+											<div class="new-carousel__placeholder">{article.title}</div>
+										)}
+									</div>
+									<div class="new-carousel__body">
+										<p class="new-carousel__meta">
+											<span>{article.category}</span>
+											<span>{article.updatedLabel}</span>
+										</p>
+										<h3>{article.title}</h3>
+										<p class="new-carousel__summary-preview">{article.previewSummary}</p>
+										{article.hasExpandableSummary && (
+											<details class="new-carousel__summary-details">
+												<summary>More</summary>
+												<p>{article.summary}</p>
+											</details>
+										)}
+										<a class="read-button" href={`/${encodeURIComponent(article.slug)}`}>Read Article</a>
+									</div>
+								</article>
+							))}
+						</div>
+					</div>
+				</section>
+			)}
 
 			{featuredSections.map((section) => (
 				<section
@@ -209,6 +337,55 @@ const { about, featuredSections } = await fetchHomeData();
 		</main>
 	</div>
 </Layout>
+
+<script>
+	const carousel = document.querySelector('.new-carousel');
+	const track = carousel?.querySelector('.new-carousel__track');
+	const cards = Array.from(carousel?.querySelectorAll('.new-carousel__card') || []);
+	const prevButton = carousel?.querySelector('[data-direction="prev"]');
+	const nextButton = carousel?.querySelector('[data-direction="next"]');
+
+	if (
+		carousel instanceof HTMLElement &&
+		track instanceof HTMLElement &&
+		prevButton instanceof HTMLButtonElement &&
+		nextButton instanceof HTMLButtonElement &&
+		cards.length > 0
+	) {
+		let currentIndex = 0;
+
+		const getVisibleCount = () => {
+			if (window.innerWidth < 720) return 1;
+			if (window.innerWidth < 1040) return 2;
+			return 3;
+		};
+
+		const updateCarousel = () => {
+			const visibleCount = getVisibleCount();
+			const maxIndex = Math.max(cards.length - visibleCount, 0);
+			currentIndex = Math.min(currentIndex, maxIndex);
+			const translatePercentage = (100 / visibleCount) * currentIndex;
+			track.style.transform = `translateX(-${translatePercentage}%)`;
+		};
+
+		prevButton.addEventListener('click', () => {
+			const visibleCount = getVisibleCount();
+			const maxIndex = Math.max(cards.length - visibleCount, 0);
+			currentIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
+			updateCarousel();
+		});
+
+		nextButton.addEventListener('click', () => {
+			const visibleCount = getVisibleCount();
+			const maxIndex = Math.max(cards.length - visibleCount, 0);
+			currentIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
+			updateCarousel();
+		});
+
+		window.addEventListener('resize', updateCarousel);
+		updateCarousel();
+	}
+</script>
 
 <style>
 	:root {
@@ -343,6 +520,160 @@ const { about, featuredSections } = await fetchHomeData();
 		background: var(--accent-hover);
 	}
 
+	.new-carousel {
+		display: grid;
+		gap: 1rem;
+		overflow: hidden;
+	}
+
+	.new-carousel__header {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.new-carousel__header h2 {
+		margin: 0;
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		font-size: clamp(1.5rem, 3vw, 2.2rem);
+	}
+
+	.new-carousel__controls {
+		display: flex;
+		gap: 0.55rem;
+	}
+
+	.new-carousel__arrow {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.8rem;
+		height: 2.8rem;
+		border: 1px solid var(--line);
+		background: var(--card);
+		color: var(--ink);
+		font-size: 1.1rem;
+		cursor: pointer;
+	}
+
+	.new-carousel__arrow:hover:not(:disabled) {
+		background: var(--accent);
+		color: #fff;
+		border-color: var(--accent);
+	}
+
+	.new-carousel__arrow:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+
+	.new-carousel__viewport {
+		overflow: hidden;
+	}
+
+	.new-carousel__track {
+		display: flex;
+		transition: transform 260ms ease;
+		will-change: transform;
+	}
+
+	.new-carousel__card {
+		flex: 0 0 calc(100% / 3);
+		min-width: 0;
+		padding-right: 1rem;
+		box-sizing: border-box;
+	}
+
+	.new-carousel__media {
+		aspect-ratio: 4 / 3;
+		border: 1px solid var(--line);
+		background: color-mix(in oklab, var(--card) 88%, transparent);
+		overflow: hidden;
+	}
+
+	.new-carousel__media img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	.new-carousel__placeholder {
+		height: 100%;
+		display: grid;
+		place-items: center;
+		padding: 1rem;
+		text-align: center;
+		color: var(--muted);
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		background:
+			linear-gradient(135deg, rgba(31, 138, 112, 0.12), rgba(242, 100, 48, 0.1)),
+			repeating-linear-gradient(
+				-45deg,
+				rgba(255, 255, 255, 0.55),
+				rgba(255, 255, 255, 0.55) 10px,
+				rgba(236, 231, 218, 0.45) 10px,
+				rgba(236, 231, 218, 0.45) 20px
+			);
+	}
+
+	.new-carousel__body {
+		display: grid;
+		gap: 0.7rem;
+		padding-top: 0.85rem;
+	}
+
+	.new-carousel__meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		margin: 0;
+		font-size: 0.78rem;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.new-carousel__body h3 {
+		margin: 0;
+		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+		font-size: clamp(1.15rem, 2vw, 1.45rem);
+	}
+
+	.new-carousel__summary-preview {
+		margin: 0;
+		color: var(--muted);
+		line-height: 1.56;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.new-carousel__summary-details {
+		margin: -0.15rem 0 0;
+	}
+
+	.new-carousel__summary-details summary {
+		cursor: pointer;
+		color: var(--accent);
+		font-weight: 700;
+		list-style: none;
+	}
+
+	.new-carousel__summary-details summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.new-carousel__summary-details p {
+		margin: 0.55rem 0 0;
+		color: var(--muted);
+		line-height: 1.56;
+	}
+
 	.subject-card {
 		display: flex;
 		gap: 1rem;
@@ -442,6 +773,10 @@ const { about, featuredSections } = await fetchHomeData();
 	}
 
 	@media (max-width: 900px) {
+		.new-carousel__card {
+			flex-basis: calc(100% / 2);
+		}
+
 		.subject-card {
 			display: grid;
 			grid-template-columns: 1fr;
@@ -466,8 +801,20 @@ const { about, featuredSections } = await fetchHomeData();
 			padding-inline: 0;
 		}
 
+		.new-carousel__header {
+			align-items: start;
+			flex-direction: column;
+		}
+
 		.hero::before {
 			background-attachment: scroll;
+		}
+	}
+
+	@media (max-width: 720px) {
+		.new-carousel__card {
+			flex-basis: 100%;
+			padding-right: 0;
 		}
 	}
 

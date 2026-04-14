@@ -139,7 +139,6 @@ const defaultNavItems: NavItem[] = [
 		]
 	},
 	{ type: 'link', label: 'About', href: '/about' },
-	{ type: 'link', label: 'New', href: '/new', variant: 'button' },
 	{ type: 'link', label: 'Subscribe', href: '/subscribe', variant: 'button' }
 ];
 
@@ -151,15 +150,15 @@ function ensureUtilityButtons(items: NavItem[]): NavItem[] {
 			.filter(Boolean)
 	);
 
-	if (!existingLabels.has('new')) {
-		normalizedItems.push({ type: 'link', label: 'New', href: '/new', variant: 'button' });
-	}
-
 	if (!existingLabels.has('subscribe')) {
 		normalizedItems.push({ type: 'link', label: 'Subscribe', href: '/subscribe', variant: 'button' });
 	}
 
 	return normalizedItems;
+}
+
+function removeDisallowedNavItems(items: NavItem[]): NavItem[] {
+	return items.filter((item) => item.label.trim().toLowerCase() !== 'new');
 }
 
 type CmsResponse = {
@@ -304,7 +303,7 @@ function parseCmsNavPayload(payload: any): { announcement: typeof defaultAnnounc
 
 	return {
 		announcement: announcement || defaultAnnouncement,
-		items: ensureUtilityButtons(items.length ? items : defaultNavItems)
+		items: removeDisallowedNavItems(ensureUtilityButtons(items.length ? items : defaultNavItems))
 	};
 }
 
@@ -343,7 +342,10 @@ async function loadNavConfig() {
 		}
 	}
 
-	return { announcement: defaultAnnouncement, items: ensureUtilityButtons(defaultNavItems) };
+	return {
+		announcement: defaultAnnouncement,
+		items: removeDisallowedNavItems(ensureUtilityButtons(defaultNavItems)),
+	};
 }
 
 const cmsNavConfig = await loadNavConfig();

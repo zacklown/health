@@ -182,13 +182,17 @@ export interface Page {
   category: 'Foundations' | 'Principles' | 'Foods' | 'Supplements' | 'Diets' | 'Studies' | 'General';
   summary: string;
   /**
+   * Turn this off for site-information pages and other articles that should not display the rating badges.
+   */
+  showArticleRatings: boolean;
+  /**
    * Overall practical recommendation strength using your Low-Pebble to High-Boulder scale.
    */
-  rockRating: 'low-pebble' | 'medium-rock' | 'high-rock' | 'high-boulder';
+  rockRating?: ('low-pebble' | 'medium-rock' | 'high-rock' | 'high-boulder') | null;
   /**
    * Overall confidence in the evidence base from Low to High.
    */
-  scientificEvidence: 'low' | 'moderate-low' | 'moderate' | 'moderate-high' | 'high';
+  scientificEvidence?: ('low' | 'moderate-low' | 'moderate' | 'moderate-high' | 'high') | null;
   rockRatingScore?: number | null;
   scientificEvidenceScore?: number | null;
   /**
@@ -210,9 +214,9 @@ export interface Page {
          */
         headingLevel: 'h2' | 'h3' | 'h4';
         /**
-         * Section content in Markdown. Use this for the main written explanation under the section heading.
+         * Optional section content in Markdown. Leave blank when a heading is only used to introduce nested subsections.
          */
-        body: string;
+        body?: string | null;
         /**
          * Optional image displayed with this section.
          */
@@ -273,6 +277,10 @@ export interface Page {
    * Flag to highlight this item in the New section.
    */
   isNew?: boolean | null;
+  /**
+   * Exclude this article from the random article button and random article page.
+   */
+  excludeFromRandom?: boolean | null;
   /**
    * Mark this article as eligible for the Home page featured subject cards.
    */
@@ -457,6 +465,7 @@ export interface PagesSelect<T extends boolean = true> {
   slug?: T;
   category?: T;
   summary?: T;
+  showArticleRatings?: T;
   rockRating?: T;
   scientificEvidence?: T;
   rockRatingScore?: T;
@@ -494,6 +503,7 @@ export interface PagesSelect<T extends boolean = true> {
       };
   body?: T;
   isNew?: T;
+  excludeFromRandom?: T;
   featureOnHome?: T;
   homeSubject?: T;
   featureImage?: T;
