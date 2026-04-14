@@ -957,4 +957,97 @@ const navItems = cmsNavConfig.items;
 			margin: 0.55rem 0 0.3rem;
 		}
 	}
+
+	@media (max-width: 960px) {
+		.site-nav__item,
+		.site-dropdown,
+		.site-dropdown__column,
+		.site-dropdown__column-list,
+		.site-dropdown__column li {
+			width: 100%;
+		}
+
+		.site-nav__item > a,
+		.site-dropdown__trigger {
+			display: flex !important;
+			align-items: center !important;
+			justify-content: space-between !important;
+			width: 100% !important;
+			padding: 0.72rem 0.6rem !important;
+			color: var(--color-text) !important;
+			background: var(--color-surface) !important;
+			text-decoration: none !important;
+			font-size: 0.95rem !important;
+			font-weight: 700 !important;
+			opacity: 1 !important;
+			visibility: visible !important;
+			-webkit-text-fill-color: var(--color-text) !important;
+		}
+
+		.site-dropdown.is-open .site-dropdown__panel {
+			display: grid !important;
+			width: 100% !important;
+			padding: 0.2rem 0 0.45rem !important;
+			margin-top: 0.1rem !important;
+			background: var(--color-surface) !important;
+			opacity: 1 !important;
+			visibility: visible !important;
+			pointer-events: auto !important;
+			left: auto !important;
+			transform: none !important;
+		}
+
+		.site-dropdown__column p {
+			display: block !important;
+			margin: 0.5rem 0 0.25rem !important;
+			padding: 0 0.6rem !important;
+			color: var(--color-muted) !important;
+			opacity: 1 !important;
+			visibility: visible !important;
+			font-size: 0.7rem !important;
+			font-weight: 700 !important;
+			letter-spacing: 0.08em !important;
+			text-transform: uppercase !important;
+			-webkit-text-fill-color: var(--color-muted) !important;
+		}
+
+		.site-dropdown__column-list {
+			display: grid !important;
+			gap: 0 !important;
+			background: var(--color-surface) !important;
+		}
+
+		.site-dropdown__link,
+		.site-dropdown__link:visited,
+		.site-dropdown__link:hover,
+		.site-dropdown__link:focus,
+		.site-dropdown__link--mobile-safe {
+			display: block !important;
+			width: 100% !important;
+			padding: 0.72rem 0.6rem !important;
+			color: var(--color-text) !important;
+			background: transparent !important;
+			text-decoration: none !important;
+			font-size: 0.92rem !important;
+			line-height: 1.35 !important;
+			opacity: 1 !important;
+			visibility: visible !important;
+			text-shadow: none !important;
+			-webkit-text-fill-color: var(--color-text) !important;
+		}
+
+		.site-dropdown__link-text {
+			display: inline !important;
+			color: var(--color-text) !important;
+			opacity: 1 !important;
+			visibility: visible !important;
+			text-shadow: none !important;
+			-webkit-text-fill-color: var(--color-text) !important;
+		}
+
+		.site-dropdown__link:hover,
+		.site-dropdown__link:focus {
+			background: var(--color-surface-soft) !important;
+		}
+	}
 </style>
