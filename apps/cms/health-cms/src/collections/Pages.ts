@@ -32,6 +32,12 @@ const getScaleScore = (
   return match?.score ?? null
 }
 
+type ValidationArgs = {
+  siblingData?: {
+    showArticleRatings?: boolean
+  }
+}
+
 const articleSectionFields: NonNullable<CollectionConfig['fields']>[number][] = [
   {
     name: 'heading',
@@ -303,7 +309,7 @@ export const Pages: CollectionConfig = {
             description:
               'Overall practical recommendation strength using your Low-Pebble to High-Boulder scale.',
           },
-          validate: (value, { siblingData }) => {
+          validate: (value: unknown, { siblingData }: ValidationArgs) => {
             if (siblingData?.showArticleRatings === false) return true
             if (typeof value === 'string' && value.trim()) return true
             return 'Choose a ROCK Rating or disable article ratings for this page.'
@@ -321,7 +327,7 @@ export const Pages: CollectionConfig = {
             condition: (_, siblingData) => siblingData?.showArticleRatings !== false,
             description: 'Overall confidence in the evidence base from Low to High.',
           },
-          validate: (value, { siblingData }) => {
+          validate: (value: unknown, { siblingData }: ValidationArgs) => {
             if (siblingData?.showArticleRatings === false) return true
             if (typeof value === 'string' && value.trim()) return true
             return 'Choose a Scientific Evidence rating or disable article ratings for this page.'

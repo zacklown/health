@@ -2,3 +2,5 @@ node_modules
 .pnpm-store
 frontend-dev.log
 frontend-dev.err.log
+apps/cms/health-cms/.next/
+apps/cms/health-cms/.next-build/
