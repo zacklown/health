@@ -17,6 +17,9 @@ services:
     working_dir: /app/apps/frontend
     command: bash -lc "pnpm install --frozen-lockfile --ignore-workspace && pnpm build && HOST=0.0.0.0 PORT=4321 pnpm start"
     restart: always
+    environment:
+      PUBLIC_CMS_URL: http://cms:3000
+      PUBLIC_CMS_PUBLIC_URL: https://cms.zacklown.com
     ports:
       - "4321:4321"
 

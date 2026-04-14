@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { renderMarkdown, renderMarkdownWithToc, slugifyHeading, type TocItem } from '../lib/articleRendering';
+import { getPublicCmsBaseUrl, resolveCmsMediaUrl } from '../lib/cmsMedia';
 export const prerender = false;
 
 type RelatedArticle = {
@@ -59,8 +60,9 @@ type CmsPage = {
 const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
 	Boolean
 ) as string[];
-const publicCmsBaseUrl = ((import.meta as any).env.PUBLIC_CMS_PUBLIC_URL as string | undefined)?.replace(/\/+$/, '') ||
-	`${Astro.url.protocol}//${Astro.url.hostname}:3000`;
+const publicCmsBaseUrl = getPublicCmsBaseUrl(Astro.url, {
+	PUBLIC_CMS_PUBLIC_URL: (import.meta as any).env.PUBLIC_CMS_PUBLIC_URL as string | undefined,
+});
 
 const rockRatingLabels: Record<string, string> = {
 	'low-pebble': 'Low Pebble',
@@ -78,21 +80,7 @@ const scientificEvidenceLabels: Record<string, string> = {
 };
 
 function normalizeMediaUrl(url: string): string {
-	if (/^https?:\/\//i.test(url)) {
-		try {
-			const parsed = new URL(url);
-			if (parsed.hostname === 'cms') {
-				parsed.protocol = Astro.url.protocol;
-				parsed.hostname = Astro.url.hostname;
-				parsed.port = '3000';
-				return parsed.toString();
-			}
-			return parsed.toString();
-		} catch {
-			return url;
-		}
-	}
-	return `${publicCmsBaseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+	return resolveCmsMediaUrl(url, publicCmsBaseUrl);
 }
 
 function getMediaData(media: CmsMedia | number | null | undefined): { url: string; alt: string } | null {
