@@ -157,6 +157,7 @@ const articleTypes = [
   .subscribe-card {
     border: 1px solid var(--color-border);
     background: var(--color-surface);
+    color: var(--color-text);
     padding: clamp(1.2rem, 3vw, 2rem);
   }
 
@@ -240,6 +241,7 @@ const articleTypes = [
   }
 
   .field input {
+    color-scheme: light;
     padding: 0.75rem 0.85rem;
     border: 1px solid var(--color-border);
     background: var(--color-bg);
@@ -248,6 +250,7 @@ const articleTypes = [
   }
 
   .option-group {
+    color-scheme: light;
     border: 1px solid var(--color-border);
     padding: 1rem;
     margin: 0;
@@ -266,6 +269,7 @@ const articleTypes = [
   }
 
   .option-card {
+    color-scheme: light;
     display: flex;
     gap: 0.75rem;
     align-items: start;
@@ -294,6 +298,7 @@ const articleTypes = [
   }
 
   button {
+    color-scheme: light;
     width: fit-content;
     padding: 0.75rem 1rem;
     border: 1px solid var(--color-accent);
@@ -307,6 +312,15 @@ const articleTypes = [
   button:hover {
     background: var(--color-accent-hover);
     border-color: var(--color-accent-hover);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .field input,
+    .option-group,
+    .option-card,
+    button {
+      color-scheme: dark;
+    }
   }
 
   @media (max-width: 720px) {
