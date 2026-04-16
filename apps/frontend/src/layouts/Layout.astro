@@ -1,98 +1,100 @@
 ---
-import SiteFooter from '../components/SiteFooter.astro';
-import SiteNavbar from '../components/SiteNavbar.astro';
-import metaDataIconPng from '../assets/MetaDataIcon.png';
-import metaDataIconIco from '../assets/MetaDataIcon.ico';
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteNavbar from '../components/SiteNavbar.astro'
+import metaDataIconPng from '../assets/MetaDataIcon.png'
+import metaDataIconIco from '../assets/MetaDataIcon.ico'
 
-const metaDataIconPngUrl = typeof metaDataIconPng === 'string' ? metaDataIconPng : metaDataIconPng.src;
-const metaDataIconIcoUrl = typeof metaDataIconIco === 'string' ? metaDataIconIco : metaDataIconIco.src;
+const metaDataIconPngUrl =
+  typeof metaDataIconPng === 'string' ? metaDataIconPng : metaDataIconPng.src
+const metaDataIconIcoUrl =
+  typeof metaDataIconIco === 'string' ? metaDataIconIco : metaDataIconIco.src
 
 interface Props {
-	title?: string;
-	description?: string;
+  title?: string
+  description?: string
 }
 
 const {
-	title = 'Health Atlas',
-	description = 'A personal encyclopedia for food, supplements, diets, and research notes.'
-} = Astro.props;
+  title = 'Health Atlas',
+  description = 'A personal encyclopedia for food, supplements, diets, and research notes.',
+} = Astro.props
 ---
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="icon" type="image/png" href={metaDataIconPngUrl} />
-		<link rel="shortcut icon" type="image/x-icon" href={metaDataIconIcoUrl} />
-		<link rel="icon" type="image/x-icon" href={metaDataIconIcoUrl} />
-		<meta name="generator" content={Astro.generator} />
-		<meta name="description" content={description} />
-		<title>{title}</title>
-	</head>
-	<body>
-		<SiteNavbar />
-		<slot />
-		<SiteFooter />
-	</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href={metaDataIconPngUrl} />
+    <link rel="shortcut icon" type="image/x-icon" href={metaDataIconIcoUrl} />
+    <link rel="icon" type="image/x-icon" href={metaDataIconIcoUrl} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <SiteNavbar />
+    <slot />
+    <SiteFooter />
+  </body>
 </html>
 
 <style>
-	:root {
-		font-family: 'Avenir Next', Avenir, 'Century Gothic', 'Trebuchet MS', sans-serif;
-		color-scheme: light dark;
-		--color-bg: #f5f2e9;
-		--color-text: #162130;
-		--color-muted: #586778;
-		--color-surface: #fffdf8;
-		--color-surface-alt: #f7f8fb;
-		--color-surface-soft: #eef2f8;
-		--color-border: #d6dae2;
-		--color-inverse-bg: #0f172a;
-		--color-inverse-text: #e5edf5;
-		--color-accent: #1f8a70;
-		--color-accent-hover: #176e5a;
-		--color-accent-warm: #f26430;
-	}
+  :root {
+    font-family: 'Avenir Next', Avenir, 'Century Gothic', 'Trebuchet MS', sans-serif;
+    color-scheme: light dark;
+    --color-bg: #f5f2e9;
+    --color-text: #162130;
+    --color-muted: #586778;
+    --color-surface: #fffdf8;
+    --color-surface-alt: #f7f8fb;
+    --color-surface-soft: #eef2f8;
+    --color-border: #d6dae2;
+    --color-inverse-bg: #0f172a;
+    --color-inverse-text: #e5edf5;
+    --color-accent: #1f8a70;
+    --color-accent-hover: #176e5a;
+    --color-accent-warm: #f26430;
+  }
 
-	@media (prefers-color-scheme: dark) {
-		:root {
-			--color-bg: #0b1119;
-			--color-text: #d8e2ee;
-			--color-muted: #9fb0c6;
-			--color-surface: #111a26;
-			--color-surface-alt: #131e2b;
-			--color-surface-soft: #172334;
-			--color-border: #2b3b4f;
-			--color-inverse-bg: #0a0f17;
-			--color-inverse-text: #dde7f5;
-			--color-accent: #2aa481;
-			--color-accent-hover: #1d8669;
-			--color-accent-warm: #ff8b5f;
-		}
-	}
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #0b1119;
+      --color-text: #d8e2ee;
+      --color-muted: #9fb0c6;
+      --color-surface: #111a26;
+      --color-surface-alt: #131e2b;
+      --color-surface-soft: #172334;
+      --color-border: #2b3b4f;
+      --color-inverse-bg: #0a0f17;
+      --color-inverse-text: #dde7f5;
+      --color-accent: #2aa481;
+      --color-accent-hover: #1d8669;
+      --color-accent-warm: #ff8b5f;
+    }
+  }
 
-	html,
-	body {
-		width: 100%;
-		margin: 0;
-		min-height: 100%;
-		overflow-x: hidden;
-	}
+  html,
+  body {
+    width: 100%;
+    margin: 0;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
 
-	body > * {
-		width: 100%;
-		max-width: 100%;
-	}
+  body > * {
+    width: 100%;
+    max-width: 100%;
+  }
 
-	body {
-		background: var(--color-bg);
-		color: var(--color-text);
-	}
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
 
-	*,
-	*::before,
-	*::after {
-		box-sizing: border-box;
-	}
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 </style>

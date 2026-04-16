@@ -1,318 +1,327 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from '../layouts/Layout.astro'
 
 const articleTypes = [
-	'Foundations',
-	'Principles',
-	'Foods',
-	'Supplements',
-	'Diets',
-	'Studies',
-	'General',
-];
-
+  'Foundations',
+  'Principles',
+  'Foods',
+  'Supplements',
+  'Diets',
+  'Studies',
+  'General',
+]
 ---
 
 <Layout
-	title="Subscribe | Metadata"
-	description="Subscribe for updates when new health and nutrition articles are published."
+  title="Subscribe | Metadata"
+  description="Subscribe for updates when new health and nutrition articles are published."
 >
-	<main class="subscribe-shell">
-		<section class="subscribe-card">
-			<div class="subscribe-card__top">
-				<div>
-					<p class="eyebrow">Stay Updated</p>
-					<h1>Subscribe</h1>
-					<p class="lede">
-						Get notified when new reviews, study breakdowns, nutrition notes, and site updates are added to
-						Metadata.
-					</p>
-				</div>
-				<div class="top-actions">
-					<a class="top-actions__button" href="#subscription-form">Subscribe</a>
-				</div>
-			</div>
-			<form class="subscribe-form" id="subscription-form" method="post" action="#">
-				<div class="form-grid">
-					<label class="field">
-						<span>Name</span>
-						<input type="text" name="name" placeholder="Your name" autocomplete="name" required />
-					</label>
-					<label class="field">
-						<span>Email</span>
-						<input
-							type="email"
-							name="email"
-							placeholder="you@example.com"
-							autocomplete="email"
-							required
-						/>
-					</label>
-				</div>
+  <main class="subscribe-shell">
+    <section class="subscribe-card">
+      <div class="subscribe-card__top">
+        <div>
+          <p class="eyebrow">Stay Updated</p>
+          <h1>Subscribe</h1>
+          <p class="lede">
+            Get notified when new reviews, study breakdowns, nutrition notes, and site updates are
+            added to Metadata.
+          </p>
+        </div>
+        <div class="top-actions">
+          <a class="top-actions__button" href="#subscription-form">Subscribe</a>
+        </div>
+      </div>
+      <form class="subscribe-form" id="subscription-form" method="post" action="#">
+        <div class="form-grid">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="name" placeholder="Your name" autocomplete="name" required />
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input
+              type="email"
+              name="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
+          </label>
+        </div>
 
-				<fieldset class="option-group">
-					<legend>Article alerts</legend>
-					<label class="option-card">
-						<input
-							type="checkbox"
-							name="article-alerts"
-							value="all-new-articles"
-							id="all-new-articles"
-							checked
-						/>
-						<span>
-							<strong>All new articles</strong>
-							<small>Get notified whenever any new article is published.</small>
-						</span>
-					</label>
-				</fieldset>
+        <fieldset class="option-group">
+          <legend>Article alerts</legend>
+          <label class="option-card">
+            <input
+              type="checkbox"
+              name="article-alerts"
+              value="all-new-articles"
+              id="all-new-articles"
+              checked
+            />
+            <span>
+              <strong>All new articles</strong>
+              <small>Get notified whenever any new article is published.</small>
+            </span>
+          </label>
+        </fieldset>
 
-				<fieldset class="option-group">
-					<legend>By article type</legend>
-					<div class="option-grid">
-						{articleTypes.map((type) => (
-							<label class="option-card">
-								<input type="checkbox" name="article-types" value={type} class="article-type-checkbox" checked />
-								<span>{type}</span>
-							</label>
-						))}
-					</div>
-				</fieldset>
+        <fieldset class="option-group">
+          <legend>By article type</legend>
+          <div class="option-grid">
+            {
+              articleTypes.map((type) => (
+                <label class="option-card">
+                  <input
+                    type="checkbox"
+                    name="article-types"
+                    value={type}
+                    class="article-type-checkbox"
+                    checked
+                  />
+                  <span>{type}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
 
-				<fieldset class="option-group">
-					<legend>Newsletter</legend>
-					<div class="option-stack">
-						<label class="option-card option-card--detailed">
-							<input type="checkbox" name="newsletter-options" value="Newsletter" />
-							<span>
-								<strong>Newsletter</strong>
-								<small>General editorial updates, announcements, and broader site roundups.</small>
-							</span>
-						</label>
-					</div>
-				</fieldset>
+        <fieldset class="option-group">
+          <legend>Newsletter</legend>
+          <div class="option-stack">
+            <label class="option-card option-card--detailed">
+              <input type="checkbox" name="newsletter-options" value="Newsletter" />
+              <span>
+                <strong>Newsletter</strong>
+                <small>General editorial updates, announcements, and broader site roundups.</small>
+              </span>
+            </label>
+          </div>
+        </fieldset>
 
-				<button type="submit">Join the list</button>
-			</form>
-			<p class="note">
-				This is still a placeholder subscribe page. The form now matches the intended options, but it still needs
-				to be wired to your email provider.
-			</p>
-		</section>
-	</main>
+        <button type="submit">Join the list</button>
+      </form>
+      <p class="note">
+        This is still a placeholder subscribe page. The form now matches the intended options, but
+        it still needs to be wired to your email provider.
+      </p>
+    </section>
+  </main>
 </Layout>
 
 <script>
-	const allNewArticlesCheckbox = document.querySelector('#all-new-articles');
-	const articleTypeCheckboxes = Array.from(document.querySelectorAll('.article-type-checkbox'));
+  const allNewArticlesCheckbox = document.querySelector('#all-new-articles')
+  const articleTypeCheckboxes = Array.from(document.querySelectorAll('.article-type-checkbox'))
 
-	if (allNewArticlesCheckbox instanceof HTMLInputElement && articleTypeCheckboxes.length > 0) {
-		const syncArticleTypes = (checked) => {
-			articleTypeCheckboxes.forEach((checkbox) => {
-				if (checkbox instanceof HTMLInputElement) {
-					checkbox.checked = checked;
-				}
-			});
-		};
+  if (allNewArticlesCheckbox instanceof HTMLInputElement && articleTypeCheckboxes.length > 0) {
+    const syncArticleTypes = (checked) => {
+      articleTypeCheckboxes.forEach((checkbox) => {
+        if (checkbox instanceof HTMLInputElement) {
+          checkbox.checked = checked
+        }
+      })
+    }
 
-		const syncMasterCheckbox = () => {
-			const allChecked = articleTypeCheckboxes.every(
-				(checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked
-			);
-			allNewArticlesCheckbox.checked = allChecked;
-			allNewArticlesCheckbox.indeterminate = !allChecked && articleTypeCheckboxes.some(
-				(checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked
-			);
-		};
+    const syncMasterCheckbox = () => {
+      const allChecked = articleTypeCheckboxes.every(
+        (checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked,
+      )
+      allNewArticlesCheckbox.checked = allChecked
+      allNewArticlesCheckbox.indeterminate =
+        !allChecked &&
+        articleTypeCheckboxes.some(
+          (checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked,
+        )
+    }
 
-		allNewArticlesCheckbox.addEventListener('change', () => {
-			allNewArticlesCheckbox.indeterminate = false;
-			syncArticleTypes(allNewArticlesCheckbox.checked);
-		});
+    allNewArticlesCheckbox.addEventListener('change', () => {
+      allNewArticlesCheckbox.indeterminate = false
+      syncArticleTypes(allNewArticlesCheckbox.checked)
+    })
 
-		articleTypeCheckboxes.forEach((checkbox) => {
-			checkbox.addEventListener('change', syncMasterCheckbox);
-		});
+    articleTypeCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener('change', syncMasterCheckbox)
+    })
 
-		syncMasterCheckbox();
-	}
+    syncMasterCheckbox()
+  }
 </script>
 
 <style>
-	.subscribe-shell {
-		width: min(960px, calc(100vw - 2rem));
-		margin: 0 auto;
-		padding: 2rem 0 3rem;
-	}
+  .subscribe-shell {
+    width: min(960px, calc(100vw - 2rem));
+    margin: 0 auto;
+    padding: 2rem 0 3rem;
+  }
 
-	.subscribe-card {
-		border: 1px solid var(--color-border);
-		background: var(--color-surface);
-		padding: clamp(1.2rem, 3vw, 2rem);
-	}
+  .subscribe-card {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: clamp(1.2rem, 3vw, 2rem);
+  }
 
-	.subscribe-card__top {
-		display: flex;
-		justify-content: space-between;
-		gap: 1rem;
-		align-items: start;
-	}
+  .subscribe-card__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+  }
 
-	.top-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.6rem;
-		justify-content: flex-end;
-	}
+  .top-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: flex-end;
+  }
 
-	.top-actions__button {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0.72rem 1rem;
-		border: 1px solid var(--color-accent);
-		background: var(--color-accent);
-		color: #fff;
-		font-size: 0.95rem;
-		font-weight: 700;
-		text-decoration: none;
-	}
+  .top-actions__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.72rem 1rem;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
 
-	.top-actions__button:hover {
-		background: var(--color-accent-hover);
-		border-color: var(--color-accent-hover);
-		color: #fff;
-	}
+  .top-actions__button:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+    color: #fff;
+  }
 
-	.eyebrow {
-		margin: 0 0 0.4rem;
-		font-size: 0.72rem;
-		letter-spacing: 0.18em;
-		text-transform: uppercase;
-		color: var(--color-accent);
-		font-weight: 700;
-	}
+  .eyebrow {
+    margin: 0 0 0.4rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    font-weight: 700;
+  }
 
-	h1 {
-		margin: 0;
-		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
-		font-size: clamp(2rem, 5vw, 3rem);
-		color: var(--color-text);
-	}
+  h1 {
+    margin: 0;
+    font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--color-text);
+  }
 
-	.lede,
-	.note {
-		color: var(--color-muted);
-		line-height: 1.65;
-	}
+  .lede,
+  .note {
+    color: var(--color-muted);
+    line-height: 1.65;
+  }
 
-	.subscribe-form {
-		display: grid;
-		gap: 1rem;
-		margin-top: 1.4rem;
-	}
+  .subscribe-form {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.4rem;
+  }
 
-	.form-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.9rem;
-	}
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
 
-	.field {
-		display: grid;
-		gap: 0.35rem;
-	}
+  .field {
+    display: grid;
+    gap: 0.35rem;
+  }
 
-	.field span,
-	.option-group legend {
-		font-size: 0.9rem;
-		font-weight: 700;
-		color: var(--color-text);
-	}
+  .field span,
+  .option-group legend {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
 
-	.field input {
-		padding: 0.75rem 0.85rem;
-		border: 1px solid var(--color-border);
-		background: var(--color-bg);
-		color: var(--color-text);
-		font-size: 1rem;
-	}
+  .field input {
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 1rem;
+  }
 
-	.option-group {
-		border: 1px solid var(--color-border);
-		padding: 1rem;
-		margin: 0;
-		display: grid;
-		gap: 0.8rem;
-	}
+  .option-group {
+    border: 1px solid var(--color-border);
+    padding: 1rem;
+    margin: 0;
+    display: grid;
+    gap: 0.8rem;
+  }
 
-	.option-grid,
-	.option-stack {
-		display: grid;
-		gap: 0.7rem;
-	}
+  .option-grid,
+  .option-stack {
+    display: grid;
+    gap: 0.7rem;
+  }
 
-	.option-grid {
-		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-	}
+  .option-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
 
-	.option-card {
-		display: flex;
-		gap: 0.75rem;
-		align-items: start;
-		padding: 0.8rem 0.9rem;
-		border: 1px solid var(--color-border);
-		background: color-mix(in oklab, var(--color-surface) 94%, white);
-	}
+  .option-card {
+    display: flex;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--color-border);
+    background: color-mix(in oklab, var(--color-surface) 94%, white);
+  }
 
-	.option-card input {
-		margin-top: 0.18rem;
-	}
+  .option-card input {
+    margin-top: 0.18rem;
+  }
 
-	.option-card span {
-		display: grid;
-		gap: 0.15rem;
-		color: var(--color-text);
-	}
+  .option-card span {
+    display: grid;
+    gap: 0.15rem;
+    color: var(--color-text);
+  }
 
-	.option-card strong {
-		font-size: 0.96rem;
-	}
+  .option-card strong {
+    font-size: 0.96rem;
+  }
 
-	.option-card small {
-		color: var(--color-muted);
-		line-height: 1.45;
-	}
+  .option-card small {
+    color: var(--color-muted);
+    line-height: 1.45;
+  }
 
-	button {
-		width: fit-content;
-		padding: 0.75rem 1rem;
-		border: 1px solid var(--color-accent);
-		background: var(--color-accent);
-		color: #fff;
-		font-size: 0.95rem;
-		font-weight: 700;
-		cursor: pointer;
-	}
+  button {
+    width: fit-content;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
 
-	button:hover {
-		background: var(--color-accent-hover);
-		border-color: var(--color-accent-hover);
-	}
+  button:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
 
-	@media (max-width: 720px) {
-		.subscribe-shell {
-			width: calc(100vw - 1.2rem);
-		}
+  @media (max-width: 720px) {
+    .subscribe-shell {
+      width: calc(100vw - 1.2rem);
+    }
 
-		.subscribe-card__top,
-		.form-grid {
-			grid-template-columns: 1fr;
-			display: grid;
-		}
+    .subscribe-card__top,
+    .form-grid {
+      grid-template-columns: 1fr;
+      display: grid;
+    }
 
-		.top-actions {
-			justify-content: flex-start;
-		}
-	}
+    .top-actions {
+      justify-content: flex-start;
+    }
+  }
 </style>

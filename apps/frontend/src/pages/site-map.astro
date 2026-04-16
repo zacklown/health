@@ -1,105 +1,109 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from '../layouts/Layout.astro'
 
 const siteMapSections = [
-	{
-		title: 'Main Pages',
-		links: [
-			{ label: 'Home', href: '/' },
-			{ label: 'Dictionary', href: '/dictionary' },
-			{ label: 'Subscribe', href: '/subscribe' },
-			{ label: 'Random Article', href: '/random-article' },
-		],
-	},
-	{
-		title: 'Site Information',
-		links: [
-			{ label: 'How to Use the Site', href: '/site-use' },
-			{ label: 'AI Statement', href: '/ai-statement' },
-			{ label: 'Privacy Policy', href: '/review/privacyPolicy' },
-		],
-	},
-];
+  {
+    title: 'Main Pages',
+    links: [
+      { label: 'Home', href: '/' },
+      { label: 'Dictionary', href: '/dictionary' },
+      { label: 'Subscribe', href: '/subscribe' },
+      { label: 'Random Article', href: '/random-article' },
+    ],
+  },
+  {
+    title: 'Site Information',
+    links: [
+      { label: 'How to Use the Site', href: '/site-use' },
+      { label: 'AI Statement', href: '/ai-statement' },
+      { label: 'Privacy Policy', href: '/review/privacyPolicy' },
+    ],
+  },
+]
 ---
 
 <Layout title="Site Map | Metadata" description="Site map for Metadata.">
-	<main class="site-map-shell">
-		<header class="site-map-header">
-			<p class="eyebrow">Navigation</p>
-			<h1>Site Map</h1>
-			<p>A quick index of the main public pages on the site.</p>
-		</header>
+  <main class="site-map-shell">
+    <header class="site-map-header">
+      <p class="eyebrow">Navigation</p>
+      <h1>Site Map</h1>
+      <p>A quick index of the main public pages on the site.</p>
+    </header>
 
-		<section class="site-map-grid">
-			{siteMapSections.map((section) => (
-				<section class="site-map-card">
-					<h2>{section.title}</h2>
-					<ul>
-						{section.links.map((link) => (
-							<li><a href={link.href}>{link.label}</a></li>
-						))}
-					</ul>
-				</section>
-			))}
-		</section>
-	</main>
+    <section class="site-map-grid">
+      {
+        siteMapSections.map((section) => (
+          <section class="site-map-card">
+            <h2>{section.title}</h2>
+            <ul>
+              {section.links.map((link) => (
+                <li>
+                  <a href={link.href}>{link.label}</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </section>
+  </main>
 </Layout>
 
 <style>
-	.site-map-shell {
-		width: min(1000px, calc(100vw - 2rem));
-		margin: 0 auto;
-		padding: 2rem 0 3rem;
-	}
+  .site-map-shell {
+    width: min(1000px, calc(100vw - 2rem));
+    margin: 0 auto;
+    padding: 2rem 0 3rem;
+  }
 
-	.site-map-header,
-	.site-map-card {
-		border: 1px solid var(--color-border);
-		background: var(--color-surface);
-		padding: 1.1rem;
-	}
+  .site-map-header,
+  .site-map-card {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: 1.1rem;
+  }
 
-	.site-map-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-		gap: 1rem;
-		margin-top: 1rem;
-	}
+  .site-map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
 
-	.eyebrow {
-		margin: 0 0 0.35rem;
-		font-size: 0.72rem;
-		letter-spacing: 0.18em;
-		text-transform: uppercase;
-		color: var(--color-accent);
-		font-weight: 700;
-	}
+  .eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    font-weight: 700;
+  }
 
-	h1,
-	h2 {
-		margin: 0;
-		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
-		color: var(--color-text);
-	}
+  h1,
+  h2 {
+    margin: 0;
+    font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+    color: var(--color-text);
+  }
 
-	.site-map-header p,
-	.site-map-card li {
-		color: var(--color-muted);
-		line-height: 1.6;
-	}
+  .site-map-header p,
+  .site-map-card li {
+    color: var(--color-muted);
+    line-height: 1.6;
+  }
 
-	.site-map-card ul {
-		margin: 0.85rem 0 0;
-		padding-left: 1.1rem;
-	}
+  .site-map-card ul {
+    margin: 0.85rem 0 0;
+    padding-left: 1.1rem;
+  }
 
-	.site-map-card a {
-		color: var(--color-accent);
-		text-decoration: none;
-		font-weight: 600;
-	}
+  .site-map-card a {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
 
-	.site-map-card a:hover {
-		text-decoration: underline;
-	}
+  .site-map-card a:hover {
+    text-decoration: underline;
+  }
 </style>

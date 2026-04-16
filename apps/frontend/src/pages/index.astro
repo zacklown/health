@@ -1,1090 +1,1141 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import heroBackground from '../assets/Hero background.jpg';
-import { getPublicCmsBaseUrl, resolveCmsMediaUrl } from '../lib/cmsMedia';
+import Layout from '../layouts/Layout.astro'
+import heroBackground from '../assets/Hero background.jpg'
+import { getPublicCmsBaseUrl, resolveCmsMediaUrl } from '../lib/cmsMedia'
 
-const heroBackgroundUrl = typeof heroBackground === 'string' ? heroBackground : heroBackground.src;
+const heroBackgroundUrl = typeof heroBackground === 'string' ? heroBackground : heroBackground.src
 
 type CmsMedia = {
-	url?: string;
-	alt?: string;
-};
+  url?: string
+  alt?: string
+}
 
 type TagItem = {
-	tag?: string | null;
-	name?: string | null;
-	slug?: string | null;
-};
+  tag?: string | null
+  name?: string | null
+  slug?: string | null
+}
 
 type RelatedPage = {
-	title?: string;
-	slug?: string;
-	summary?: string;
-	category?: string;
-	tags?: TagItem[] | null;
-	isNew?: boolean | null;
-	updatedAt?: string;
-	createdAt?: string;
-	featureImage?: CmsMedia | null;
-	heroImage?: CmsMedia | null;
-};
+  title?: string
+  slug?: string
+  summary?: string
+  category?: string
+  tags?: TagItem[] | null
+  isNew?: boolean | null
+  updatedAt?: string
+  createdAt?: string
+  featureImage?: CmsMedia | null
+  heroImage?: CmsMedia | null
+}
 
 type FeaturedSection = {
-	eyebrow: string;
-	title: string;
-	slug: string;
-	summary: string;
-	tags: string[];
-	imageUrl?: string;
-	imageAlt?: string;
-	imagePlacement: 'left' | 'right';
-	imageSize: 'small' | 'medium' | 'large';
-	imageWidth: string;
-};
+  eyebrow: string
+  title: string
+  slug: string
+  summary: string
+  tags: string[]
+  imageUrl?: string
+  imageAlt?: string
+  imagePlacement: 'left' | 'right'
+  imageSize: 'small' | 'medium' | 'large'
+  imageWidth: string
+}
 
 type HomeAbout = {
-	eyebrow: string;
-	title: string;
-	description: string;
-};
+  eyebrow: string
+  title: string
+  description: string
+}
 
 type NewArticleCard = {
-	title: string;
-	slug: string;
-	summary: string;
-	previewSummary: string;
-	category: string;
-	tags: string[];
-	updatedLabel: string;
-	imageUrl?: string;
-	imageAlt?: string;
-};
+  title: string
+  slug: string
+  summary: string
+  previewSummary: string
+  category: string
+  tags: string[]
+  updatedLabel: string
+  imageUrl?: string
+  imageAlt?: string
+}
 
 const defaultAbout: HomeAbout = {
-	eyebrow: 'About',
-	title: 'A practical health knowledge base built one article at a time.',
-	description:
-		'Meta(bolic)data organizes notes on food, supplements, diets, and studies into decision-ready summaries you can apply in daily life.',
-};
+  eyebrow: 'About',
+  title: 'A practical health knowledge base built one article at a time.',
+  description:
+    'Meta(bolic)data organizes notes on food, supplements, diets, and studies into decision-ready summaries you can apply in daily life.',
+}
 
-const cmsBaseUrls = [import.meta.env.PUBLIC_CMS_URL, 'http://cms:3000', 'http://localhost:3000'].filter(
-	Boolean
-) as string[];
+const cmsBaseUrls = [
+  import.meta.env.PUBLIC_CMS_URL,
+  'http://cms:3000',
+  'http://localhost:3000',
+].filter(Boolean) as string[]
 const publicCmsBaseUrl = getPublicCmsBaseUrl(Astro.url, {
-	PUBLIC_CMS_PUBLIC_URL: (import.meta as any).env.PUBLIC_CMS_PUBLIC_URL as string | undefined,
-});
+  PUBLIC_CMS_PUBLIC_URL: (import.meta as any).env.PUBLIC_CMS_PUBLIC_URL as string | undefined,
+})
 
 function getStringValue(value: unknown): string | null {
-	if (typeof value !== 'string') return null;
-	const trimmed = value.trim();
-	return trimmed.length ? trimmed : null;
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed.length ? trimmed : null
 }
 
 function parseMediaAsset(raw: unknown): { imageUrl?: string; imageAlt?: string } {
-	if (!raw || typeof raw !== 'object') return {};
-	const media = raw as CmsMedia;
-	const mediaUrl = getStringValue(media.url);
-	if (!mediaUrl) return {};
+  if (!raw || typeof raw !== 'object') return {}
+  const media = raw as CmsMedia
+  const mediaUrl = getStringValue(media.url)
+  if (!mediaUrl) return {}
 
-	return {
-		imageUrl: resolveCmsMediaUrl(mediaUrl, publicCmsBaseUrl),
-		imageAlt: getStringValue(media.alt) || undefined,
-	};
+  return {
+    imageUrl: resolveCmsMediaUrl(mediaUrl, publicCmsBaseUrl),
+    imageAlt: getStringValue(media.alt) || undefined,
+  }
 }
 
 function resolveFeaturedMedia(...sources: unknown[]): { imageUrl?: string; imageAlt?: string } {
-	for (const source of sources) {
-		const media = parseMediaAsset(source);
-		if (media.imageUrl) return media;
-	}
+  for (const source of sources) {
+    const media = parseMediaAsset(source)
+    if (media.imageUrl) return media
+  }
 
-	return {};
+  return {}
 }
 
 function normalizeTags(tags: TagItem[] | null | undefined): string[] {
-	if (!Array.isArray(tags)) return [];
+  if (!Array.isArray(tags)) return []
 
-	const seen = new Set<string>();
-	const normalized: string[] = [];
+  const seen = new Set<string>()
+  const normalized: string[] = []
 
-	for (const entry of tags) {
-		const tag = getStringValue(entry?.name) || getStringValue(entry?.tag);
-		if (!tag) continue;
+  for (const entry of tags) {
+    const tag = getStringValue(entry?.name) || getStringValue(entry?.tag)
+    if (!tag) continue
 
-		const key = tag.toLowerCase();
-		if (seen.has(key)) continue;
-		seen.add(key);
-		normalized.push(tag);
-	}
+    const key = tag.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    normalized.push(tag)
+  }
 
-	return normalized;
+  return normalized
 }
 
 function splitTags(tags: string[], visibleCount = 3): { visible: string[]; hidden: string[] } {
-	return {
-		visible: tags.slice(0, visibleCount),
-		hidden: tags.slice(visibleCount),
-	};
+  return {
+    visible: tags.slice(0, visibleCount),
+    hidden: tags.slice(visibleCount),
+  }
 }
 
 function buildSummaryPreview(summary: string): { previewSummary: string } {
-	const normalizedSummary = summary.trim();
+  const normalizedSummary = summary.trim()
 
-	return {
-		previewSummary: normalizedSummary,
-	};
+  return {
+    previewSummary: normalizedSummary,
+  }
 }
 
 function buildFeaturedSection(raw: any): FeaturedSection | null {
-	if (!raw || typeof raw !== 'object') return null;
+  if (!raw || typeof raw !== 'object') return null
 
-	const article = raw.article && typeof raw.article === 'object' ? (raw.article as RelatedPage) : null;
-	const slug = getStringValue(article?.slug);
-	const title = getStringValue(article?.title);
-	if (!slug || !title) return null;
+  const article =
+    raw.article && typeof raw.article === 'object' ? (raw.article as RelatedPage) : null
+  const slug = getStringValue(article?.slug)
+  const title = getStringValue(article?.title)
+  if (!slug || !title) return null
 
-	const media = resolveFeaturedMedia(raw.imageOverride, article?.featureImage, article?.heroImage);
-	const imagePlacement = getStringValue(raw.imagePlacement) === 'left' ? 'left' : 'right';
-	const imageSize = ['small', 'medium', 'large'].includes(getStringValue(raw.imageSize) || '')
-		? ((getStringValue(raw.imageSize) as 'small' | 'medium' | 'large'))
-		: 'medium';
-	const imageWidth = ['25', '30', '35', '38', '40', '45', '50', '55', '60'].includes(
-		getStringValue(raw.imageWidth) || ''
-	)
-		? (getStringValue(raw.imageWidth) as string)
-		: '38';
+  const media = resolveFeaturedMedia(raw.imageOverride, article?.featureImage, article?.heroImage)
+  const imagePlacement = getStringValue(raw.imagePlacement) === 'left' ? 'left' : 'right'
+  const imageSize = ['small', 'medium', 'large'].includes(getStringValue(raw.imageSize) || '')
+    ? (getStringValue(raw.imageSize) as 'small' | 'medium' | 'large')
+    : 'medium'
+  const imageWidth = ['25', '30', '35', '38', '40', '45', '50', '55', '60'].includes(
+    getStringValue(raw.imageWidth) || '',
+  )
+    ? (getStringValue(raw.imageWidth) as string)
+    : '38'
 
-	return {
-		eyebrow: getStringValue(raw.eyebrow) || 'Featured Article',
-		title,
-		slug,
-		summary:
-			getStringValue(raw.summaryOverride) ||
-			getStringValue(article?.summary) ||
-			'Open this article to read the full breakdown, references, and practical notes.',
-		tags: normalizeTags(article?.tags),
-		imagePlacement,
-		imageSize,
-		imageWidth,
-		...media,
-	};
+  return {
+    eyebrow: getStringValue(raw.eyebrow) || 'Featured Article',
+    title,
+    slug,
+    summary:
+      getStringValue(raw.summaryOverride) ||
+      getStringValue(article?.summary) ||
+      'Open this article to read the full breakdown, references, and practical notes.',
+    tags: normalizeTags(article?.tags),
+    imagePlacement,
+    imageSize,
+    imageWidth,
+    ...media,
+  }
 }
 
 async function fetchHomeData(): Promise<{ about: HomeAbout; featuredSections: FeaturedSection[] }> {
-	for (const baseUrl of cmsBaseUrls) {
-		try {
-			const homeRes = await fetch(`${baseUrl}/api/globals/home-page?depth=2`);
-			if (!homeRes.ok) continue;
+  for (const baseUrl of cmsBaseUrls) {
+    try {
+      const homeRes = await fetch(`${baseUrl}/api/globals/home-page?depth=2`)
+      if (!homeRes.ok) continue
 
-			const homeData = await homeRes.json();
-			const aboutData = homeData?.about;
-			const about = {
-				eyebrow: getStringValue(aboutData?.eyebrow) || defaultAbout.eyebrow,
-				title: getStringValue(aboutData?.title) || defaultAbout.title,
-				description: getStringValue(aboutData?.description) || defaultAbout.description,
-			};
+      const homeData = await homeRes.json()
+      const aboutData = homeData?.about
+      const about = {
+        eyebrow: getStringValue(aboutData?.eyebrow) || defaultAbout.eyebrow,
+        title: getStringValue(aboutData?.title) || defaultAbout.title,
+        description: getStringValue(aboutData?.description) || defaultAbout.description,
+      }
 
-			const featuredSections = Array.isArray(homeData?.featuredSections)
-				? homeData.featuredSections
-						.map(buildFeaturedSection)
-						.filter((item): item is FeaturedSection => Boolean(item))
-				: [];
+      const featuredSections = Array.isArray(homeData?.featuredSections)
+        ? homeData.featuredSections
+            .map(buildFeaturedSection)
+            .filter((item): item is FeaturedSection => Boolean(item))
+        : []
 
-			return { about, featuredSections };
-		} catch (_) {
-			// Try next base URL.
-		}
-	}
+      return { about, featuredSections }
+    } catch (_) {
+      // Try next base URL.
+    }
+  }
 
-	return { about: defaultAbout, featuredSections: [] };
+  return { about: defaultAbout, featuredSections: [] }
 }
 
 async function fetchNewArticles(): Promise<NewArticleCard[]> {
-	for (const baseUrl of cmsBaseUrls) {
-		try {
-			const params = new URLSearchParams({
-				limit: '200',
-				sort: '-updatedAt',
-			});
-			const res = await fetch(`${baseUrl}/api/pages?${params.toString()}`);
-			if (!res.ok) continue;
+  for (const baseUrl of cmsBaseUrls) {
+    try {
+      const params = new URLSearchParams({
+        limit: '200',
+        sort: '-updatedAt',
+      })
+      const res = await fetch(`${baseUrl}/api/pages?${params.toString()}`)
+      if (!res.ok) continue
 
-			const data = await res.json();
-			const docs = Array.isArray(data?.docs) ? (data.docs as RelatedPage[]) : [];
+      const data = await res.json()
+      const docs = Array.isArray(data?.docs) ? (data.docs as RelatedPage[]) : []
 
-			return docs
-				.filter((article) => article?.isNew === true)
-				.filter((article) => getStringValue(article.slug) && getStringValue(article.title))
-				.map((article) => {
-					const media = resolveFeaturedMedia(article.featureImage, article.heroImage);
-					const summary =
-						getStringValue(article.summary) ||
-						'Open the article to read the full breakdown, references, and practical notes.';
-					const summaryPreview = buildSummaryPreview(summary);
+      return docs
+        .filter((article) => article?.isNew === true)
+        .filter((article) => getStringValue(article.slug) && getStringValue(article.title))
+        .map((article) => {
+          const media = resolveFeaturedMedia(article.featureImage, article.heroImage)
+          const summary =
+            getStringValue(article.summary) ||
+            'Open the article to read the full breakdown, references, and practical notes.'
+          const summaryPreview = buildSummaryPreview(summary)
 
-					return {
-						title: getStringValue(article.title) || 'Untitled article',
-						slug: getStringValue(article.slug) || '',
-						summary,
-						category: getStringValue(article.category) || 'General',
-						tags: normalizeTags(article.tags),
-						updatedLabel: new Date(article.updatedAt || article.createdAt || Date.now()).toLocaleDateString(),
-						...summaryPreview,
-						...media,
-					};
-				});
-		} catch (_) {
-			// Try next base URL.
-		}
-	}
+          return {
+            title: getStringValue(article.title) || 'Untitled article',
+            slug: getStringValue(article.slug) || '',
+            summary,
+            category: getStringValue(article.category) || 'General',
+            tags: normalizeTags(article.tags),
+            updatedLabel: new Date(
+              article.updatedAt || article.createdAt || Date.now(),
+            ).toLocaleDateString(),
+            ...summaryPreview,
+            ...media,
+          }
+        })
+    } catch (_) {
+      // Try next base URL.
+    }
+  }
 
-	return [];
+  return []
 }
 
-const { about, featuredSections } = await fetchHomeData();
-const newArticles = await fetchNewArticles();
+const { about, featuredSections } = await fetchHomeData()
+const newArticles = await fetchNewArticles()
 ---
 
 <Layout title="Metadata" description="Personal health wiki for structured reviews and study notes.">
-	<div class="page-shell">
-		<main>
-			<section class="hero block" style={`--hero-bg: url('${heroBackgroundUrl}')`}>
-				<div class="hero-content">
-					<p class="eyebrow">By Zack Lown</p>
-					<h1>Metadata</h1>
-					<p class="lede">
-						Meta(bolic)data is a free database about food, diets, and studies related to health and nutrition.
-					</p>
-				</div>
-			</section>
+  <div class="page-shell">
+    <main>
+      <section class="hero block" style={`--hero-bg: url('${heroBackgroundUrl}')`}>
+        <div class="hero-content">
+          <p class="eyebrow">By Zack Lown</p>
+          <h1>Metadata</h1>
+          <p class="lede">
+            Meta(bolic)data is a free database about food, diets, and studies related to health and
+            nutrition.
+          </p>
+        </div>
+      </section>
 
-			<section class="block about">
-				<p class="eyebrow">{about.eyebrow}</p>
-				<h2>{about.title}</h2>
-				<p>{about.description}</p>
-				<div class="about__actions">
-					<a class="about__button" href="/ai-statement">AI statement</a>
-					<a class="about__button" href="/site-use">Site use</a>
-				</div>
-			</section>
+      <section class="block about">
+        <p class="eyebrow">{about.eyebrow}</p>
+        <h2>{about.title}</h2>
+        <p>{about.description}</p>
+        <div class="about__actions">
+          <a class="about__button" href="/ai-statement">AI statement</a>
+          <a class="about__button" href="/site-use">Site use</a>
+        </div>
+      </section>
 
-			{newArticles.length > 0 && (
-				<section class="block new-carousel" aria-label="New articles">
-					<div class="new-carousel__header">
-						<div>
-							<p class="eyebrow">New</p>
-							<h2>Recently Added Articles</h2>
-						</div>
-						<div class="new-carousel__controls">
-							<button class="new-carousel__arrow" type="button" data-direction="prev" aria-label="Show previous new articles">
-								&larr;
-							</button>
-							<button class="new-carousel__arrow" type="button" data-direction="next" aria-label="Show next new articles">
-								&rarr;
-							</button>
-						</div>
-					</div>
-					<div class="new-carousel__viewport">
-						<div class="new-carousel__track">
-							{newArticles.map((article, index) => {
-								const tagDisplay = splitTags(article.tags);
-								const dialogId = `new-card-tags-${index}`;
+      {
+        newArticles.length > 0 && (
+          <section class="block new-carousel" aria-label="New articles">
+            <div class="new-carousel__header">
+              <div>
+                <p class="eyebrow">New</p>
+                <h2>Recently Added Articles</h2>
+              </div>
+              <div class="new-carousel__controls">
+                <button
+                  class="new-carousel__arrow"
+                  type="button"
+                  data-direction="prev"
+                  aria-label="Show previous new articles"
+                >
+                  &larr;
+                </button>
+                <button
+                  class="new-carousel__arrow"
+                  type="button"
+                  data-direction="next"
+                  aria-label="Show next new articles"
+                >
+                  &rarr;
+                </button>
+              </div>
+            </div>
+            <div class="new-carousel__viewport">
+              <div class="new-carousel__track">
+                {newArticles.map((article, index) => {
+                  const tagDisplay = splitTags(article.tags)
+                  const dialogId = `new-card-tags-${index}`
 
-								return (
-								<article class="new-carousel__card">
-									<div class="new-carousel__media">
-										{article.imageUrl ? (
-											<img
-												src={article.imageUrl}
-												alt={article.imageAlt || `${article.title} image`}
-												loading="lazy"
-											/>
-										) : (
-											<div class="new-carousel__placeholder">{article.title}</div>
-										)}
-									</div>
-									<div class="new-carousel__body">
-										<p class="new-carousel__meta">
-											<span>{article.category}</span>
-											<span>{article.updatedLabel}</span>
-										</p>
-										<h3>{article.title}</h3>
-										{article.tags.length > 0 && (
-											<div class="tag-group">
-											<ul class="tag-list" aria-label="Article tags">
-												{tagDisplay.visible.map((tag) => (
-													<li>{tag}</li>
-												))}
-												{tagDisplay.hidden.length > 0 && (
-													<li class="tag-list__more">
-														<button type="button" class="tag-more-button" data-tag-dialog-trigger={dialogId}>
-															More &gt;
-														</button>
-													</li>
-												)}
-											</ul>
-											{tagDisplay.hidden.length > 0 && (
-												<dialog class="tag-dialog" data-tag-dialog={dialogId} aria-label="Additional article tags">
-													<div class="tag-dialog__card">
-														<div class="tag-dialog__header">
-															<h2>More Tags</h2>
-															<button type="button" class="tag-dialog__close" data-tag-dialog-close={dialogId}>
-																Close
-															</button>
-														</div>
-														<ul class="tag-dialog__list">
-															{tagDisplay.hidden.map((tag) => (
-																<li>{tag}</li>
-															))}
-														</ul>
-													</div>
-												</dialog>
-											)}
-											</div>
-										)}
-										<p class="new-carousel__summary-preview">{article.previewSummary}</p>
-										<a class="read-button" href={`/${encodeURIComponent(article.slug)}`}>Read Article</a>
-									</div>
-								</article>
-								);
-							})}
-						</div>
-					</div>
-				</section>
-			)}
+                  return (
+                    <article class="new-carousel__card">
+                      <div class="new-carousel__media">
+                        {article.imageUrl ? (
+                          <img
+                            src={article.imageUrl}
+                            alt={article.imageAlt || `${article.title} image`}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div class="new-carousel__placeholder">{article.title}</div>
+                        )}
+                      </div>
+                      <div class="new-carousel__body">
+                        <p class="new-carousel__meta">
+                          <span>{article.category}</span>
+                          <span>{article.updatedLabel}</span>
+                        </p>
+                        <h3>{article.title}</h3>
+                        {article.tags.length > 0 && (
+                          <div class="tag-group">
+                            <ul class="tag-list" aria-label="Article tags">
+                              {tagDisplay.visible.map((tag) => (
+                                <li>{tag}</li>
+                              ))}
+                              {tagDisplay.hidden.length > 0 && (
+                                <li class="tag-list__more">
+                                  <button
+                                    type="button"
+                                    class="tag-more-button"
+                                    data-tag-dialog-trigger={dialogId}
+                                  >
+                                    More &gt;
+                                  </button>
+                                </li>
+                              )}
+                            </ul>
+                            {tagDisplay.hidden.length > 0 && (
+                              <dialog
+                                class="tag-dialog"
+                                data-tag-dialog={dialogId}
+                                aria-label="Additional article tags"
+                              >
+                                <div class="tag-dialog__card">
+                                  <div class="tag-dialog__header">
+                                    <h2>More Tags</h2>
+                                    <button
+                                      type="button"
+                                      class="tag-dialog__close"
+                                      data-tag-dialog-close={dialogId}
+                                    >
+                                      Close
+                                    </button>
+                                  </div>
+                                  <ul class="tag-dialog__list">
+                                    {tagDisplay.hidden.map((tag) => (
+                                      <li>{tag}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </dialog>
+                            )}
+                          </div>
+                        )}
+                        <p class="new-carousel__summary-preview">{article.previewSummary}</p>
+                        <a class="read-button" href={`/${encodeURIComponent(article.slug)}`}>
+                          Read Article
+                        </a>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </div>
+          </section>
+        )
+      }
 
-			{featuredSections.map((section, index) => {
-				const tagDisplay = splitTags(section.tags);
-				const dialogId = `featured-tags-${index}`;
+      {
+        featuredSections.map((section, index) => {
+          const tagDisplay = splitTags(section.tags)
+          const dialogId = `featured-tags-${index}`
 
-				return (
-				<section
-					class={`block subject-card subject-card--${section.imagePlacement} subject-card--${section.imageSize}`}
-					style={`--home-image-width: ${section.imageWidth}%;`}
-				>
-					<div class="subject-card__content">
-						<p class="eyebrow">{section.eyebrow}</p>
-						<h2>{section.title}</h2>
-						{section.tags.length > 0 && (
-							<div class="tag-group">
-							<ul class="tag-list" aria-label="Article tags">
-								{tagDisplay.visible.map((tag) => (
-									<li>{tag}</li>
-								))}
-								{tagDisplay.hidden.length > 0 && (
-									<li class="tag-list__more">
-										<button type="button" class="tag-more-button" data-tag-dialog-trigger={dialogId}>
-											More &gt;
-										</button>
-									</li>
-								)}
-							</ul>
-							{tagDisplay.hidden.length > 0 && (
-								<dialog class="tag-dialog" data-tag-dialog={dialogId} aria-label="Additional article tags">
-									<div class="tag-dialog__card">
-										<div class="tag-dialog__header">
-											<h2>More Tags</h2>
-											<button type="button" class="tag-dialog__close" data-tag-dialog-close={dialogId}>
-												Close
-											</button>
-										</div>
-										<ul class="tag-dialog__list">
-											{tagDisplay.hidden.map((tag) => (
-												<li>{tag}</li>
-											))}
-										</ul>
-									</div>
-								</dialog>
-							)}
-							</div>
-						)}
-						<p>{section.summary}</p>
-						<a class="read-button" href={`/${encodeURIComponent(section.slug)}`}>Read Article</a>
-					</div>
-					<div class="subject-card__image">
-						{section.imageUrl ? (
-							<img
-								src={section.imageUrl}
-								alt={section.imageAlt || `${section.title} featured image`}
-								loading="lazy"
-							/>
-						) : (
-							<div class="subject-card__placeholder">{section.title}</div>
-						)}
-					</div>
-				</section>
-				);
-			})}
-		</main>
-	</div>
+          return (
+            <section
+              class={`block subject-card subject-card--${section.imagePlacement} subject-card--${section.imageSize}`}
+              style={`--home-image-width: ${section.imageWidth}%;`}
+            >
+              <div class="subject-card__content">
+                <p class="eyebrow">{section.eyebrow}</p>
+                <h2>{section.title}</h2>
+                {section.tags.length > 0 && (
+                  <div class="tag-group">
+                    <ul class="tag-list" aria-label="Article tags">
+                      {tagDisplay.visible.map((tag) => (
+                        <li>{tag}</li>
+                      ))}
+                      {tagDisplay.hidden.length > 0 && (
+                        <li class="tag-list__more">
+                          <button
+                            type="button"
+                            class="tag-more-button"
+                            data-tag-dialog-trigger={dialogId}
+                          >
+                            More &gt;
+                          </button>
+                        </li>
+                      )}
+                    </ul>
+                    {tagDisplay.hidden.length > 0 && (
+                      <dialog
+                        class="tag-dialog"
+                        data-tag-dialog={dialogId}
+                        aria-label="Additional article tags"
+                      >
+                        <div class="tag-dialog__card">
+                          <div class="tag-dialog__header">
+                            <h2>More Tags</h2>
+                            <button
+                              type="button"
+                              class="tag-dialog__close"
+                              data-tag-dialog-close={dialogId}
+                            >
+                              Close
+                            </button>
+                          </div>
+                          <ul class="tag-dialog__list">
+                            {tagDisplay.hidden.map((tag) => (
+                              <li>{tag}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </dialog>
+                    )}
+                  </div>
+                )}
+                <p>{section.summary}</p>
+                <a class="read-button" href={`/${encodeURIComponent(section.slug)}`}>
+                  Read Article
+                </a>
+              </div>
+              <div class="subject-card__image">
+                {section.imageUrl ? (
+                  <img
+                    src={section.imageUrl}
+                    alt={section.imageAlt || `${section.title} featured image`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div class="subject-card__placeholder">{section.title}</div>
+                )}
+              </div>
+            </section>
+          )
+        })
+      }
+    </main>
+  </div>
 </Layout>
 
 <script>
-	const carousel = document.querySelector('.new-carousel');
-	const track = carousel?.querySelector('.new-carousel__track');
-	const cards = Array.from(carousel?.querySelectorAll('.new-carousel__card') || []);
-	const prevButton = carousel?.querySelector('[data-direction="prev"]');
-	const nextButton = carousel?.querySelector('[data-direction="next"]');
+  const carousel = document.querySelector('.new-carousel')
+  const track = carousel?.querySelector('.new-carousel__track')
+  const cards = Array.from(carousel?.querySelectorAll('.new-carousel__card') || [])
+  const prevButton = carousel?.querySelector('[data-direction="prev"]')
+  const nextButton = carousel?.querySelector('[data-direction="next"]')
 
-	if (
-		carousel instanceof HTMLElement &&
-		track instanceof HTMLElement &&
-		prevButton instanceof HTMLButtonElement &&
-		nextButton instanceof HTMLButtonElement &&
-		cards.length > 0
-	) {
-		let currentIndex = 0;
+  if (
+    carousel instanceof HTMLElement &&
+    track instanceof HTMLElement &&
+    prevButton instanceof HTMLButtonElement &&
+    nextButton instanceof HTMLButtonElement &&
+    cards.length > 0
+  ) {
+    let currentIndex = 0
 
-		const getVisibleCount = () => {
-			if (window.innerWidth < 720) return 1;
-			if (window.innerWidth < 1040) return 2;
-			return 3;
-		};
+    const getVisibleCount = () => {
+      if (window.innerWidth < 720) return 1
+      if (window.innerWidth < 1040) return 2
+      return 3
+    }
 
-		const updateCarousel = () => {
-			const visibleCount = getVisibleCount();
-			const maxIndex = Math.max(cards.length - visibleCount, 0);
-			currentIndex = Math.min(currentIndex, maxIndex);
-			const translatePercentage = (100 / visibleCount) * currentIndex;
-			track.style.transform = `translateX(-${translatePercentage}%)`;
-		};
+    const updateCarousel = () => {
+      const visibleCount = getVisibleCount()
+      const maxIndex = Math.max(cards.length - visibleCount, 0)
+      currentIndex = Math.min(currentIndex, maxIndex)
+      const translatePercentage = (100 / visibleCount) * currentIndex
+      track.style.transform = `translateX(-${translatePercentage}%)`
+    }
 
-		prevButton.addEventListener('click', () => {
-			const visibleCount = getVisibleCount();
-			const maxIndex = Math.max(cards.length - visibleCount, 0);
-			currentIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
-			updateCarousel();
-		});
+    prevButton.addEventListener('click', () => {
+      const visibleCount = getVisibleCount()
+      const maxIndex = Math.max(cards.length - visibleCount, 0)
+      currentIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1
+      updateCarousel()
+    })
 
-		nextButton.addEventListener('click', () => {
-			const visibleCount = getVisibleCount();
-			const maxIndex = Math.max(cards.length - visibleCount, 0);
-			currentIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
-			updateCarousel();
-		});
+    nextButton.addEventListener('click', () => {
+      const visibleCount = getVisibleCount()
+      const maxIndex = Math.max(cards.length - visibleCount, 0)
+      currentIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1
+      updateCarousel()
+    })
 
-		window.addEventListener('resize', updateCarousel);
-		updateCarousel();
-	}
+    window.addEventListener('resize', updateCarousel)
+    updateCarousel()
+  }
 
-	const tagDialogTriggers = Array.from(document.querySelectorAll('[data-tag-dialog-trigger]'));
+  const tagDialogTriggers = Array.from(document.querySelectorAll('[data-tag-dialog-trigger]'))
 
-	tagDialogTriggers.forEach((trigger) => {
-		if (!(trigger instanceof HTMLButtonElement)) return;
-		const dialogId = trigger.dataset.tagDialogTrigger;
-		if (!dialogId) return;
-		const dialog = document.querySelector(`[data-tag-dialog="${dialogId}"]`);
-		if (!(dialog instanceof HTMLDialogElement)) return;
+  tagDialogTriggers.forEach((trigger) => {
+    if (!(trigger instanceof HTMLButtonElement)) return
+    const dialogId = trigger.dataset.tagDialogTrigger
+    if (!dialogId) return
+    const dialog = document.querySelector(`[data-tag-dialog="${dialogId}"]`)
+    if (!(dialog instanceof HTMLDialogElement)) return
 
-		trigger.addEventListener('click', () => {
-			dialog.showModal();
-		});
-	});
+    trigger.addEventListener('click', () => {
+      dialog.showModal()
+    })
+  })
 
-	const tagDialogCloseButtons = Array.from(document.querySelectorAll('[data-tag-dialog-close]'));
+  const tagDialogCloseButtons = Array.from(document.querySelectorAll('[data-tag-dialog-close]'))
 
-	tagDialogCloseButtons.forEach((button) => {
-		if (!(button instanceof HTMLButtonElement)) return;
-		const dialogId = button.dataset.tagDialogClose;
-		if (!dialogId) return;
-		const dialog = document.querySelector(`[data-tag-dialog="${dialogId}"]`);
-		if (!(dialog instanceof HTMLDialogElement)) return;
+  tagDialogCloseButtons.forEach((button) => {
+    if (!(button instanceof HTMLButtonElement)) return
+    const dialogId = button.dataset.tagDialogClose
+    if (!dialogId) return
+    const dialog = document.querySelector(`[data-tag-dialog="${dialogId}"]`)
+    if (!(dialog instanceof HTMLDialogElement)) return
 
-		button.addEventListener('click', () => {
-			dialog.close();
-		});
-	});
+    button.addEventListener('click', () => {
+      dialog.close()
+    })
+  })
 
-	const tagDialogs = Array.from(document.querySelectorAll('[data-tag-dialog]'));
+  const tagDialogs = Array.from(document.querySelectorAll('[data-tag-dialog]'))
 
-	tagDialogs.forEach((dialog) => {
-		if (!(dialog instanceof HTMLDialogElement)) return;
+  tagDialogs.forEach((dialog) => {
+    if (!(dialog instanceof HTMLDialogElement)) return
 
-		dialog.addEventListener('click', (event) => {
-			const bounds = dialog.getBoundingClientRect();
-			const clickedInside =
-				event.clientX >= bounds.left &&
-				event.clientX <= bounds.right &&
-				event.clientY >= bounds.top &&
-				event.clientY <= bounds.bottom;
+    dialog.addEventListener('click', (event) => {
+      const bounds = dialog.getBoundingClientRect()
+      const clickedInside =
+        event.clientX >= bounds.left &&
+        event.clientX <= bounds.right &&
+        event.clientY >= bounds.top &&
+        event.clientY <= bounds.bottom
 
-			if (!clickedInside) dialog.close();
-		});
-	});
+      if (!clickedInside) dialog.close()
+    })
+  })
 </script>
 
 <style>
-	:root {
-		--ink: var(--color-text);
-		--muted: var(--color-muted);
-		--paper: var(--color-bg);
-		--card: var(--color-surface);
-		--line: var(--color-border);
-		--accent: var(--color-accent);
-		--accent-hover: var(--color-accent-hover);
-	}
-
-	body {
-		margin: 0;
-		overflow-x: hidden;
-		background:
-			radial-gradient(circle at 0% 0%, rgba(242, 100, 48, 0.18), transparent 45%),
-			radial-gradient(circle at 100% 10%, rgba(31, 138, 112, 0.2), transparent 42%),
-			var(--paper);
-		color: var(--ink);
-	}
-
-	.page-shell {
-		width: 100%;
-		padding: 0 0 3rem;
-	}
-
-	main {
-		display: grid;
-		gap: 1.2rem;
-		padding-inline: 1rem;
-	}
-
-	.block {
-		border: 1px solid var(--line);
-		background: color-mix(in oklab, var(--card) 86%, transparent);
-		padding: 1.1rem;
-	}
-
-	.hero {
-		position: relative;
-		min-height: clamp(420px, 75vh, 760px);
-		display: flex;
-		align-items: flex-end;
-		padding: clamp(1.2rem, 4vw, 2.4rem);
-		width: 100vw;
-		max-width: 100vw;
-		margin-left: calc(50% - 50vw);
-		margin-right: calc(50% - 50vw);
-		overflow: hidden;
-		border: 0;
-		background: transparent;
-	}
-
-	.hero::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: 0;
-		background-image:
-			linear-gradient(to top, rgba(8, 18, 29, 0.78) 0%, rgba(8, 18, 29, 0.4) 38%, rgba(8, 18, 29, 0.22) 100%),
-			var(--hero-bg);
-		background-size: cover;
-		background-position: center;
-		background-repeat: no-repeat;
-		background-attachment: fixed;
-		transform: scale(1.06);
-	}
-
-	.hero-content {
-		position: relative;
-		z-index: 1;
-		width: 100%;
-		max-width: min(900px, 100%);
-	}
-
-	.hero h1 {
-		margin: 0;
-		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
-		font-size: clamp(2rem, 5.8vw, 3.6rem);
-		line-height: 1.04;
-		color: #f7fbff;
-	}
-
-	.hero .lede {
-		max-width: 56ch;
-		margin-top: 0.9rem;
-		font-size: 1.05rem;
-		color: #e4edf5;
-	}
-
-	.eyebrow {
-		margin: 0 0 0.35rem;
-		font-size: 0.72rem;
-		letter-spacing: 0.18em;
-		text-transform: uppercase;
-		color: var(--accent);
-		font-weight: 700;
-	}
-
-	.about h2 {
-		margin: 0;
-		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
-		font-size: clamp(1.5rem, 3vw, 2.2rem);
-	}
-
-	.about p {
-		color: var(--muted);
-		line-height: 1.62;
-	}
-
-	.about__actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.55rem;
-		margin-top: 0.5rem;
-	}
-
-	.about__button {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0.56rem 0.95rem;
-		background: var(--accent);
-		color: #ffffff;
-		text-decoration: none;
-		font-size: 0.9rem;
-		font-weight: 700;
-	}
-
-	.about__button:hover {
-		background: var(--accent-hover);
-	}
-
-	.new-carousel {
-		display: grid;
-		gap: 1rem;
-		overflow: hidden;
-	}
-
-	.new-carousel__header {
-		display: flex;
-		align-items: end;
-		justify-content: space-between;
-		gap: 1rem;
-	}
-
-	.new-carousel__header h2 {
-		margin: 0;
-		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
-		font-size: clamp(1.5rem, 3vw, 2.2rem);
-	}
-
-	.new-carousel__controls {
-		display: flex;
-		gap: 0.55rem;
-	}
-
-	.new-carousel__arrow {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 2.8rem;
-		height: 2.8rem;
-		border: 1px solid var(--line);
-		background: var(--card);
-		color: var(--ink);
-		font-size: 1.1rem;
-		cursor: pointer;
-	}
-
-	.new-carousel__arrow:hover:not(:disabled) {
-		background: var(--accent);
-		color: #fff;
-		border-color: var(--accent);
-	}
-
-	.new-carousel__arrow:disabled {
-		opacity: 0.4;
-		cursor: default;
-	}
-
-	.new-carousel__viewport {
-		overflow: hidden;
-	}
-
-	.new-carousel__track {
-		display: flex;
-		align-items: stretch;
-		transition: transform 260ms ease;
-		will-change: transform;
-	}
-
-	.new-carousel__card {
-		display: flex;
-		flex-direction: column;
-		flex: 0 0 calc(100% / 3);
-		height: 100%;
-		min-width: 0;
-		padding-right: 1rem;
-		box-sizing: border-box;
-	}
-
-	.new-carousel__media {
-		aspect-ratio: 4 / 3;
-		border: 1px solid var(--line);
-		background: color-mix(in oklab, var(--card) 88%, transparent);
-		overflow: hidden;
-	}
-
-	.new-carousel__media img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-	}
-
-	.new-carousel__placeholder {
-		height: 100%;
-		display: grid;
-		place-items: center;
-		padding: 1rem;
-		text-align: center;
-		color: var(--muted);
-		font-weight: 700;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-		background:
-			linear-gradient(135deg, rgba(31, 138, 112, 0.12), rgba(242, 100, 48, 0.1)),
-			repeating-linear-gradient(
-				-45deg,
-				rgba(255, 255, 255, 0.55),
-				rgba(255, 255, 255, 0.55) 10px,
-				rgba(236, 231, 218, 0.45) 10px,
-				rgba(236, 231, 218, 0.45) 20px
-			);
-	}
-
-	.new-carousel__body {
-		display: flex;
-		flex-direction: column;
-		gap: 0.18rem;
-		flex: 1 1 auto;
-		padding-top: 0.85rem;
-	}
-
-	.new-carousel__meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.6rem;
-		margin: 0 0 0.28rem;
-		font-size: 0.78rem;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-		color: var(--muted);
-	}
-
-	.new-carousel__body h3 {
-		margin: 0 0 0.08rem;
-		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
-		font-size: clamp(1.15rem, 2vw, 1.45rem);
-		line-height: 1.3;
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	.new-carousel__summary-preview {
-		margin: 0.32rem 0 0;
-		color: var(--muted);
-		line-height: 1.56;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-		min-height: calc(1.56em * 2);
-	}
-
-	.new-carousel__body .read-button {
-		margin-top: auto;
-		align-self: start;
-	}
-
-	.new-carousel__body .tag-group {
-		margin-top: 0;
-	}
-
-	.tag-list {
-		list-style: none;
-		display: flex;
-		flex-wrap: nowrap;
-		gap: 0.45rem;
-		margin: 0;
-		padding: 0;
-		min-height: 1.75rem;
-		overflow: hidden;
-		white-space: nowrap;
-	}
-
-	.tag-list li {
-		flex: 0 0 auto;
-		margin: 0;
-		padding: 0.34rem 0.65rem;
-		border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--line));
-		background: color-mix(in oklab, var(--accent) 10%, var(--card));
-		color: color-mix(in oklab, var(--ink) 88%, var(--accent));
-		font-size: 0.75rem;
-		font-weight: 700;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-	}
-
-	.tag-list__more {
-		padding: 0;
-		border: 0;
-		background: transparent;
-	}
-
-	.tag-more-button {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0.16rem 0.1rem;
-		border: 0;
-		background: transparent;
-		color: var(--accent);
-		font: inherit;
-		font-size: 0.75rem;
-		font-weight: 700;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-		cursor: pointer;
-	}
-
-	.tag-more-button:hover {
-		color: var(--accent-hover);
-		text-decoration: underline;
-	}
-
-	.tag-dialog {
-		border: 0;
-		padding: 0;
-		background: transparent;
-		max-width: min(34rem, calc(100vw - 2rem));
-		width: 100%;
-	}
-
-	.tag-dialog::backdrop {
-		background: rgba(12, 18, 25, 0.58);
-	}
-
-	.tag-dialog__card {
-		border: 1px solid var(--line);
-		background: var(--card);
-		padding: 1rem;
-		box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.2);
-	}
-
-	.tag-dialog__header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		margin-bottom: 0.85rem;
-	}
-
-	.tag-dialog__header h2 {
-		margin: 0;
-		font-size: 1rem;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--muted);
-	}
-
-	.tag-dialog__close {
-		border: 1px solid var(--line);
-		background: var(--card);
-		padding: 0.45rem 0.75rem;
-		color: var(--ink);
-		font: inherit;
-		cursor: pointer;
-	}
-
-	.tag-dialog__list {
-		list-style: none;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.55rem;
-		margin: 0;
-		padding: 0;
-	}
-
-	.tag-dialog__list li {
-		margin: 0;
-		padding: 0.4rem 0.74rem;
-		border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--line));
-		background: color-mix(in oklab, var(--accent) 10%, var(--card));
-		color: color-mix(in oklab, var(--ink) 88%, var(--accent));
-		font-size: 0.8rem;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-	}
-
-	.subject-card {
-		display: flex;
-		gap: 1rem;
-		align-items: stretch;
-	}
-
-	.subject-card__content {
-		flex: 1 1 0;
-		min-width: 0;
-	}
-
-	.subject-card--left .subject-card__content {
-		order: 2;
-	}
-
-	.subject-card--left .subject-card__image {
-		order: 1;
-	}
-
-	.subject-card--small .subject-card__image {
-		min-height: 190px;
-	}
-
-	.subject-card--medium .subject-card__image {
-		min-height: 230px;
-	}
-
-	.subject-card--large .subject-card__image {
-		min-height: 290px;
-	}
-
-	.subject-card__content h2 {
-		margin: 0;
-		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
-		font-size: clamp(1.3rem, 2.5vw, 1.9rem);
-		line-height: 1.3;
-		min-height: calc(1.3em * 3);
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	.subject-card__content p {
-		margin-top: 0.65rem;
-		color: var(--muted);
-		line-height: 1.56;
-	}
-
-	.read-button {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		margin-top: 0.6rem;
-		padding: 0.56rem 0.95rem;
-		background: var(--accent);
-		color: #ffffff;
-		text-decoration: none;
-		font-size: 0.9rem;
-		font-weight: 700;
-	}
-
-	.read-button:hover {
-		background: var(--accent-hover);
-	}
-
-	.subject-card__image {
-		flex: 0 0 var(--home-image-width, 38%);
-		width: var(--home-image-width, 38%);
-		max-width: min(100%, var(--home-image-width, 38%));
-		min-width: 180px;
-		border: 1px solid var(--line);
-		background: color-mix(in oklab, var(--card) 88%, transparent);
-		overflow: hidden;
-	}
-
-	.subject-card__image img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-	}
-
-	.subject-card__placeholder {
-		height: 100%;
-		display: grid;
-		place-items: center;
-		padding: 1rem;
-		text-align: center;
-		color: var(--muted);
-		font-weight: 700;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-		background:
-			linear-gradient(135deg, rgba(31, 138, 112, 0.12), rgba(242, 100, 48, 0.1)),
-			repeating-linear-gradient(
-				-45deg,
-				rgba(255, 255, 255, 0.55),
-				rgba(255, 255, 255, 0.55) 10px,
-				rgba(236, 231, 218, 0.45) 10px,
-				rgba(236, 231, 218, 0.45) 20px
-			);
-	}
-
-	@media (max-width: 900px) {
-		.new-carousel__card {
-			flex-basis: calc(100% / 2);
-		}
-
-		.subject-card {
-			display: grid;
-			grid-template-columns: 1fr;
-		}
-
-		.subject-card--left .subject-card__content,
-		.subject-card--left .subject-card__image {
-			order: initial;
-		}
-
-		.subject-card__image {
-			flex: initial;
-			width: 100%;
-			max-width: none;
-			min-width: 0;
-			min-height: 210px;
-		}
-	}
-
-	@media (max-width: 760px) {
-		main {
-			padding-inline: 0;
-		}
-
-		.new-carousel__header {
-			align-items: start;
-			flex-direction: column;
-		}
-
-		.hero::before {
-			background-attachment: scroll;
-		}
-	}
-
-	@media (max-width: 720px) {
-		.new-carousel__card {
-			flex-basis: 100%;
-			padding-right: 0;
-		}
-	}
-
-	@media (prefers-color-scheme: dark) {
-		body {
-			background:
-				radial-gradient(circle at 0% 0%, rgba(255, 139, 95, 0.12), transparent 45%),
-				radial-gradient(circle at 100% 10%, rgba(42, 164, 129, 0.14), transparent 42%),
-				var(--paper);
-		}
-
-		.subject-card__placeholder {
-			background:
-				linear-gradient(135deg, rgba(42, 164, 129, 0.12), rgba(255, 139, 95, 0.1)),
-				repeating-linear-gradient(
-					-45deg,
-					rgba(24, 34, 48, 0.7),
-					rgba(24, 34, 48, 0.7) 10px,
-					rgba(19, 27, 38, 0.82) 10px,
-					rgba(19, 27, 38, 0.82) 20px
-				);
-		}
-	}
+  :root {
+    --ink: var(--color-text);
+    --muted: var(--color-muted);
+    --paper: var(--color-bg);
+    --card: var(--color-surface);
+    --line: var(--color-border);
+    --accent: var(--color-accent);
+    --accent-hover: var(--color-accent-hover);
+  }
+
+  body {
+    margin: 0;
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at 0% 0%, rgba(242, 100, 48, 0.18), transparent 45%),
+      radial-gradient(circle at 100% 10%, rgba(31, 138, 112, 0.2), transparent 42%), var(--paper);
+    color: var(--ink);
+  }
+
+  .page-shell {
+    width: 100%;
+    padding: 0 0 3rem;
+  }
+
+  main {
+    display: grid;
+    gap: 1.2rem;
+    padding-inline: 1rem;
+  }
+
+  .block {
+    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--card) 86%, transparent);
+    padding: 1.1rem;
+  }
+
+  .hero {
+    position: relative;
+    min-height: clamp(420px, 75vh, 760px);
+    display: flex;
+    align-items: flex-end;
+    padding: clamp(1.2rem, 4vw, 2.4rem);
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(
+        to top,
+        rgba(8, 18, 29, 0.78) 0%,
+        rgba(8, 18, 29, 0.4) 38%,
+        rgba(8, 18, 29, 0.22) 100%
+      ),
+      var(--hero-bg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    transform: scale(1.06);
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: min(900px, 100%);
+  }
+
+  .hero h1 {
+    margin: 0;
+    font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+    font-size: clamp(2rem, 5.8vw, 3.6rem);
+    line-height: 1.04;
+    color: #f7fbff;
+  }
+
+  .hero .lede {
+    max-width: 56ch;
+    margin-top: 0.9rem;
+    font-size: 1.05rem;
+    color: #e4edf5;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .about h2 {
+    margin: 0;
+    font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+  }
+
+  .about p {
+    color: var(--muted);
+    line-height: 1.62;
+  }
+
+  .about__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 0.5rem;
+  }
+
+  .about__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.56rem 0.95rem;
+    background: var(--accent);
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .about__button:hover {
+    background: var(--accent-hover);
+  }
+
+  .new-carousel {
+    display: grid;
+    gap: 1rem;
+    overflow: hidden;
+  }
+
+  .new-carousel__header {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .new-carousel__header h2 {
+    margin: 0;
+    font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+  }
+
+  .new-carousel__controls {
+    display: flex;
+    gap: 0.55rem;
+  }
+
+  .new-carousel__arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.8rem;
+    height: 2.8rem;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+
+  .new-carousel__arrow:hover:not(:disabled) {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .new-carousel__arrow:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .new-carousel__viewport {
+    overflow: hidden;
+  }
+
+  .new-carousel__track {
+    display: flex;
+    align-items: stretch;
+    transition: transform 260ms ease;
+    will-change: transform;
+  }
+
+  .new-carousel__card {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 calc(100% / 3);
+    height: 100%;
+    min-width: 0;
+    padding-right: 1rem;
+    box-sizing: border-box;
+  }
+
+  .new-carousel__media {
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    overflow: hidden;
+  }
+
+  .new-carousel__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .new-carousel__placeholder {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background:
+      linear-gradient(135deg, rgba(31, 138, 112, 0.12), rgba(242, 100, 48, 0.1)),
+      repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.55),
+        rgba(255, 255, 255, 0.55) 10px,
+        rgba(236, 231, 218, 0.45) 10px,
+        rgba(236, 231, 218, 0.45) 20px
+      );
+  }
+
+  .new-carousel__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    flex: 1 1 auto;
+    padding-top: 0.85rem;
+  }
+
+  .new-carousel__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0 0 0.28rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .new-carousel__body h3 {
+    margin: 0 0 0.08rem;
+    font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .new-carousel__summary-preview {
+    margin: 0.32rem 0 0;
+    color: var(--muted);
+    line-height: 1.56;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: calc(1.56em * 2);
+  }
+
+  .new-carousel__body .read-button {
+    margin-top: auto;
+    align-self: start;
+  }
+
+  .new-carousel__body .tag-group {
+    margin-top: 0;
+  }
+
+  .tag-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    min-height: 1.75rem;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .tag-list li {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0.34rem 0.65rem;
+    border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--line));
+    background: color-mix(in oklab, var(--accent) 10%, var(--card));
+    color: color-mix(in oklab, var(--ink) 88%, var(--accent));
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .tag-list__more {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .tag-more-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.16rem 0.1rem;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .tag-more-button:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
+
+  .tag-dialog {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    max-width: min(34rem, calc(100vw - 2rem));
+    width: 100%;
+  }
+
+  .tag-dialog::backdrop {
+    background: rgba(12, 18, 25, 0.58);
+  }
+
+  .tag-dialog__card {
+    border: 1px solid var(--line);
+    background: var(--card);
+    padding: 1rem;
+    box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.2);
+  }
+
+  .tag-dialog__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .tag-dialog__header h2 {
+    margin: 0;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .tag-dialog__close {
+    border: 1px solid var(--line);
+    background: var(--card);
+    padding: 0.45rem 0.75rem;
+    color: var(--ink);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .tag-dialog__list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tag-dialog__list li {
+    margin: 0;
+    padding: 0.4rem 0.74rem;
+    border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--line));
+    background: color-mix(in oklab, var(--accent) 10%, var(--card));
+    color: color-mix(in oklab, var(--ink) 88%, var(--accent));
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .subject-card {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .subject-card__content {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .subject-card--left .subject-card__content {
+    order: 2;
+  }
+
+  .subject-card--left .subject-card__image {
+    order: 1;
+  }
+
+  .subject-card--small .subject-card__image {
+    min-height: 190px;
+  }
+
+  .subject-card--medium .subject-card__image {
+    min-height: 230px;
+  }
+
+  .subject-card--large .subject-card__image {
+    min-height: 290px;
+  }
+
+  .subject-card__content h2 {
+    margin: 0;
+    font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
+    font-size: clamp(1.3rem, 2.5vw, 1.9rem);
+    line-height: 1.3;
+    min-height: calc(1.3em * 3);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .subject-card__content p {
+    margin-top: 0.65rem;
+    color: var(--muted);
+    line-height: 1.56;
+  }
+
+  .read-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.6rem;
+    padding: 0.56rem 0.95rem;
+    background: var(--accent);
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .read-button:hover {
+    background: var(--accent-hover);
+  }
+
+  .subject-card__image {
+    flex: 0 0 var(--home-image-width, 38%);
+    width: var(--home-image-width, 38%);
+    max-width: min(100%, var(--home-image-width, 38%));
+    min-width: 180px;
+    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    overflow: hidden;
+  }
+
+  .subject-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .subject-card__placeholder {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background:
+      linear-gradient(135deg, rgba(31, 138, 112, 0.12), rgba(242, 100, 48, 0.1)),
+      repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.55),
+        rgba(255, 255, 255, 0.55) 10px,
+        rgba(236, 231, 218, 0.45) 10px,
+        rgba(236, 231, 218, 0.45) 20px
+      );
+  }
+
+  @media (max-width: 900px) {
+    .new-carousel__card {
+      flex-basis: calc(100% / 2);
+    }
+
+    .subject-card {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .subject-card--left .subject-card__content,
+    .subject-card--left .subject-card__image {
+      order: initial;
+    }
+
+    .subject-card__image {
+      flex: initial;
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      min-height: 210px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    main {
+      padding-inline: 0;
+    }
+
+    .new-carousel__header {
+      align-items: start;
+      flex-direction: column;
+    }
+
+    .hero::before {
+      background-attachment: scroll;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .new-carousel__card {
+      flex-basis: 100%;
+      padding-right: 0;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body {
+      background:
+        radial-gradient(circle at 0% 0%, rgba(255, 139, 95, 0.12), transparent 45%),
+        radial-gradient(circle at 100% 10%, rgba(42, 164, 129, 0.14), transparent 42%), var(--paper);
+    }
+
+    .subject-card__placeholder {
+      background:
+        linear-gradient(135deg, rgba(42, 164, 129, 0.12), rgba(255, 139, 95, 0.1)),
+        repeating-linear-gradient(
+          -45deg,
+          rgba(24, 34, 48, 0.7),
+          rgba(24, 34, 48, 0.7) 10px,
+          rgba(19, 27, 38, 0.82) 10px,
+          rgba(19, 27, 38, 0.82) 20px
+        );
+    }
+  }
 </style>

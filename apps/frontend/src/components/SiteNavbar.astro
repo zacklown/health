@@ -1,1053 +1,1080 @@
 ---
-import metadataLogo from '../assets/MetadataLogo.png';
+import metadataLogo from '../assets/MetadataLogo.png'
 
-const metadataLogoUrl = typeof metadataLogo === 'string' ? metadataLogo : metadataLogo.src;
+const metadataLogoUrl = typeof metadataLogo === 'string' ? metadataLogo : metadataLogo.src
 
-const navId = 'site-nav';
+const navId = 'site-nav'
 
 type NavLink = {
-	label: string;
-	href: string;
-};
+  label: string
+  href: string
+}
 
 type NavColumn = {
-	title: string;
-	links: NavLink[];
-};
+  title: string
+  links: NavLink[]
+}
 
 type NavItem =
-	| {
-			type: 'link';
-			label: string;
-			href: string;
-			variant?: 'button' | string;
-	  }
-	| {
-			type: 'dropdown';
-			label: string;
-			href: string;
-			columns: NavColumn[];
-	  };
+  | {
+      type: 'link'
+      label: string
+      href: string
+      variant?: 'button' | string
+    }
+  | {
+      type: 'dropdown'
+      label: string
+      href: string
+      columns: NavColumn[]
+    }
 
 function getStringValue(value: unknown): string | null {
-	if (value === null || value === undefined) return null;
-	if (typeof value === 'string') {
-		const trimmed = value.trim();
-		return trimmed.length ? trimmed : null;
-	}
-	if (typeof value === 'number' || typeof value === 'boolean') {
-		return String(value);
-	}
-	return null;
+  if (value === null || value === undefined) return null
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed.length ? trimmed : null
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+  return null
 }
 
 function normalizeHref(raw: unknown): string {
-	if (typeof raw === 'string') {
-		return raw.trim() || '#';
-	}
+  if (typeof raw === 'string') {
+    return raw.trim() || '#'
+  }
 
-	if (raw && typeof raw === 'object') {
-		const linkObject = raw as Record<string, unknown>;
-		const directHref = getStringValue(linkObject.href) || getStringValue(linkObject.url) || getStringValue(linkObject.link);
-		if (directHref) return directHref;
+  if (raw && typeof raw === 'object') {
+    const linkObject = raw as Record<string, unknown>
+    const directHref =
+      getStringValue(linkObject.href) ||
+      getStringValue(linkObject.url) ||
+      getStringValue(linkObject.link)
+    if (directHref) return directHref
 
-		if (linkObject.type === 'custom' && getStringValue(linkObject.url)) {
-			return getStringValue(linkObject.url) || '#';
-		}
+    if (linkObject.type === 'custom' && getStringValue(linkObject.url)) {
+      return getStringValue(linkObject.url) || '#'
+    }
 
-		const nestedValue =
-			(linkObject as Record<string, unknown>).value ??
-			(linkObject as Record<string, unknown>).link ??
-			null;
-		if (nestedValue) {
-			const nested = normalizeHref(nestedValue);
-			if (nested) return nested;
-		}
-	}
+    const nestedValue =
+      (linkObject as Record<string, unknown>).value ??
+      (linkObject as Record<string, unknown>).link ??
+      null
+    if (nestedValue) {
+      const nested = normalizeHref(nestedValue)
+      if (nested) return nested
+    }
+  }
 
-	return '#';
+  return '#'
 }
 
 const defaultAnnouncement = {
-	text: 'Uh Oh! The website CMS was unreachable. Information shown is default and may be outdated.',
-	href: '#',
-	enabled: true
-};
+  text: 'Uh Oh! The website CMS was unreachable. Information shown is default and may be outdated.',
+  href: '#',
+  enabled: true,
+}
 
 const defaultNavItems: NavItem[] = [
-	{ type: 'link', label: 'Home', href: '/' },
-	{
-		type: 'dropdown',
-		label: 'Nutrition',
-		href: '/learn',
-		columns: [
-			{
-				title: 'Foundations',
-				links: [
-					{ label: 'The Metabolic process', href: '#' },
-					{ label: 'Study literacy', href: '#' },
-					{ label: 'Measurement methods', href: '#' }
-				]
-			},
-			{
-				title: '',
-				links: [
-					{ label: 'Meal planning', href: '#' },
-					{ label: 'Supplement timing', href: '#' },
-					{ label: '', href: '#' }
-				]
-			},
-			{
-				title: 'Basics',
-				links: [
-					{ label: 'Nutrition Dictionary', href: '#' },
-					{ label: 'Review templates', href: '#' },
-					{ label: 'Workflow checklists', href: '#' }
-				]
-			}
-		]
-	},
-	{
-		type: 'dropdown',
-		label: 'Activity',
-		href: '/blog',
-		columns: [
-			{
-				title: 'Recent',
-				links: [
-					{ label: 'Food updates', href: '#' },
-					{ label: 'Supplement notes', href: '#' },
-					{ label: 'Research breakdowns', href: '#' }
-				]
-			},
-			{
-				title: 'Categories',
-				links: [
-					{ label: 'Supplements', href: '#' },
-					{ label: 'Diets', href: '#' },
-					{ label: 'Metabolism', href: '#' }
-				]
-			},
-			{
-				title: 'More',
-				links: [
-					{ label: 'Case studies', href: '#' },
-					{ label: 'Roundups', href: '#' },
-					{ label: 'Interviews', href: '#' }
-				]
-			}
-		]
-	},
-	{ type: 'link', label: 'About', href: '/about' },
-	{ type: 'link', label: 'Subscribe', href: '/subscribe', variant: 'button' }
-];
+  { type: 'link', label: 'Home', href: '/' },
+  {
+    type: 'dropdown',
+    label: 'Nutrition',
+    href: '/learn',
+    columns: [
+      {
+        title: 'Foundations',
+        links: [
+          { label: 'The Metabolic process', href: '#' },
+          { label: 'Study literacy', href: '#' },
+          { label: 'Measurement methods', href: '#' },
+        ],
+      },
+      {
+        title: '',
+        links: [
+          { label: 'Meal planning', href: '#' },
+          { label: 'Supplement timing', href: '#' },
+          { label: '', href: '#' },
+        ],
+      },
+      {
+        title: 'Basics',
+        links: [
+          { label: 'Nutrition Dictionary', href: '#' },
+          { label: 'Review templates', href: '#' },
+          { label: 'Workflow checklists', href: '#' },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'dropdown',
+    label: 'Activity',
+    href: '/blog',
+    columns: [
+      {
+        title: 'Recent',
+        links: [
+          { label: 'Food updates', href: '#' },
+          { label: 'Supplement notes', href: '#' },
+          { label: 'Research breakdowns', href: '#' },
+        ],
+      },
+      {
+        title: 'Categories',
+        links: [
+          { label: 'Supplements', href: '#' },
+          { label: 'Diets', href: '#' },
+          { label: 'Metabolism', href: '#' },
+        ],
+      },
+      {
+        title: 'More',
+        links: [
+          { label: 'Case studies', href: '#' },
+          { label: 'Roundups', href: '#' },
+          { label: 'Interviews', href: '#' },
+        ],
+      },
+    ],
+  },
+  { type: 'link', label: 'About', href: '/about' },
+  { type: 'link', label: 'Subscribe', href: '/subscribe', variant: 'button' },
+]
 
 function ensureUtilityButtons(items: NavItem[]): NavItem[] {
-	const normalizedItems = [...items];
-	const existingLabels = new Set(
-		normalizedItems
-			.map((item) => item.label.trim().toLowerCase())
-			.filter(Boolean)
-	);
+  const normalizedItems = [...items]
+  const existingLabels = new Set(
+    normalizedItems.map((item) => item.label.trim().toLowerCase()).filter(Boolean),
+  )
 
-	if (!existingLabels.has('subscribe')) {
-		normalizedItems.push({ type: 'link', label: 'Subscribe', href: '/subscribe', variant: 'button' });
-	}
+  if (!existingLabels.has('subscribe')) {
+    normalizedItems.push({
+      type: 'link',
+      label: 'Subscribe',
+      href: '/subscribe',
+      variant: 'button',
+    })
+  }
 
-	return normalizedItems;
+  return normalizedItems
 }
 
 function removeDisallowedNavItems(items: NavItem[]): NavItem[] {
-	return items.filter((item) => item.label.trim().toLowerCase() !== 'new');
+  return items.filter((item) => item.label.trim().toLowerCase() !== 'new')
 }
 
 type CmsResponse = {
-	doc?: {
-		announcement?: unknown;
-		topAnnouncement?: unknown;
-		banner?: unknown;
-		navItems?: unknown;
-		navigation?: unknown;
-		nav?: unknown;
-		items?: unknown;
-		links?: unknown;
-		defaultLinks?: unknown;
-	} | null;
-	data?: Record<string, unknown>[] | Record<string, unknown> | null;
-	docs?: Record<string, unknown>[];
-	announcement?: unknown;
-	navItems?: unknown;
-};
+  doc?: {
+    announcement?: unknown
+    topAnnouncement?: unknown
+    banner?: unknown
+    navItems?: unknown
+    navigation?: unknown
+    nav?: unknown
+    items?: unknown
+    links?: unknown
+    defaultLinks?: unknown
+  } | null
+  data?: Record<string, unknown>[] | Record<string, unknown> | null
+  docs?: Record<string, unknown>[]
+  announcement?: unknown
+  navItems?: unknown
+}
 
 function normalizeCmsSourceUrl(url: unknown): string | null {
-	if (typeof url !== 'string') return null;
-	const trimmed = url.trim();
-	return trimmed ? trimmed.replace(/\/+$/, '') : null;
+  if (typeof url !== 'string') return null
+  const trimmed = url.trim()
+  return trimmed ? trimmed.replace(/\/+$/, '') : null
 }
 
 const cmsBaseUrls = [
-	normalizeCmsSourceUrl((import.meta as any).env.PUBLIC_CMS_URL),
-	'http://cms:3000',
-	'http://localhost:3000',
+  normalizeCmsSourceUrl((import.meta as any).env.PUBLIC_CMS_URL),
+  'http://cms:3000',
+  'http://localhost:3000',
 ]
-	.map((url) => normalizeCmsSourceUrl(url))
-	.filter((url): url is string => Boolean(url));
+  .map((url) => normalizeCmsSourceUrl(url))
+  .filter((url): url is string => Boolean(url))
 
 function normalizeAnnouncement(raw: any) {
-	if (!raw || typeof raw !== 'object') return null;
-	const enabled = raw.enabled !== false;
-	const text = raw.text || raw.label || raw.message;
-	const href = normalizeHref(raw.href ?? raw.url ?? raw.link);
-	if (!text || typeof text !== 'string') return null;
-	return { enabled, text: String(text), href: href ? String(href) : '#' };
+  if (!raw || typeof raw !== 'object') return null
+  const enabled = raw.enabled !== false
+  const text = raw.text || raw.label || raw.message
+  const href = normalizeHref(raw.href ?? raw.url ?? raw.link)
+  if (!text || typeof text !== 'string') return null
+  return { enabled, text: String(text), href: href ? String(href) : '#' }
 }
 
 function normalizeLinks(rawLinks: any): NavLink[] {
-	if (!Array.isArray(rawLinks)) return [];
-	return rawLinks
-		.map((item) => {
-			if (!item || typeof item !== 'object') return null;
-			const label =
-				getStringValue(item.label) ||
-				getStringValue(item.title) ||
-				getStringValue(item.text) ||
-				getStringValue(item.name) ||
-				getStringValue(item.heading) ||
-				getStringValue((item.text as Record<string, unknown>)?.value) ||
-				getStringValue((item.label as Record<string, unknown>)?.value) ||
-				'';
-			const href = normalizeHref(item.href ?? item.url ?? item.link);
-			if (!label || !href) return null;
-			return { label: String(label), href };
-		})
-		.filter((item): item is NavLink => Boolean(item));
+  if (!Array.isArray(rawLinks)) return []
+  return rawLinks
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null
+      const label =
+        getStringValue(item.label) ||
+        getStringValue(item.title) ||
+        getStringValue(item.text) ||
+        getStringValue(item.name) ||
+        getStringValue(item.heading) ||
+        getStringValue((item.text as Record<string, unknown>)?.value) ||
+        getStringValue((item.label as Record<string, unknown>)?.value) ||
+        ''
+      const href = normalizeHref(item.href ?? item.url ?? item.link)
+      if (!label || !href) return null
+      return { label: String(label), href }
+    })
+    .filter((item): item is NavLink => Boolean(item))
 }
 
 function normalizeColumns(rawColumns: any): NavColumn[] {
-	if (!Array.isArray(rawColumns)) return [];
-	return rawColumns
-		.map((item) => {
-			if (!item || typeof item !== 'object') return null;
-			const title = (item.title || '').toString();
-			const links = normalizeLinks(item.links || item.items || item.children);
-			if (!links.length) return null;
-			return { title, links };
-		})
-		.filter((item): item is NavColumn => Boolean(item));
+  if (!Array.isArray(rawColumns)) return []
+  return rawColumns
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null
+      const title = (item.title || '').toString()
+      const links = normalizeLinks(item.links || item.items || item.children)
+      if (!links.length) return null
+      return { title, links }
+    })
+    .filter((item): item is NavColumn => Boolean(item))
 }
 
 function normalizeNavItem(raw: any): NavItem | null {
-	if (!raw || typeof raw !== 'object') return null;
-	const label = (raw.label || raw.title || '').toString().trim();
-	let href = normalizeHref(raw.href ?? raw.url ?? raw.link);
-	if (!label) return null;
-	if (href === '#' && label.toLowerCase() === 'home') href = '/';
+  if (!raw || typeof raw !== 'object') return null
+  const label = (raw.label || raw.title || '').toString().trim()
+  let href = normalizeHref(raw.href ?? raw.url ?? raw.link)
+  if (!label) return null
+  if (href === '#' && label.toLowerCase() === 'home') href = '/'
 
-	const itemType = (raw.type || raw.kind || '').toString().toLowerCase();
-	const isButtonType = itemType === 'button';
-	const rawColumns = Array.isArray(raw.columns) ? raw.columns : [];
-	const hasColumns =
-		rawColumns.length > 0 &&
-		rawColumns.some(
-			(col: any) =>
-				col &&
-				typeof col === 'object' &&
-				(Array.isArray(col.links) || Array.isArray(col.items) || Array.isArray(col.children)) &&
-				(col.links?.length || col.items?.length || col.children?.length)
-		);
-	const isDropdown =
-		itemType === 'dropdown' ||
-		itemType === 'menu' ||
-		hasColumns ||
-		Array.isArray(raw.linkGroups) ||
-		Array.isArray(raw.groups);
-	const variant = raw.variant || raw.style || raw.variantClass;
+  const itemType = (raw.type || raw.kind || '').toString().toLowerCase()
+  const isButtonType = itemType === 'button'
+  const rawColumns = Array.isArray(raw.columns) ? raw.columns : []
+  const hasColumns =
+    rawColumns.length > 0 &&
+    rawColumns.some(
+      (col: any) =>
+        col &&
+        typeof col === 'object' &&
+        (Array.isArray(col.links) || Array.isArray(col.items) || Array.isArray(col.children)) &&
+        (col.links?.length || col.items?.length || col.children?.length),
+    )
+  const isDropdown =
+    itemType === 'dropdown' ||
+    itemType === 'menu' ||
+    hasColumns ||
+    Array.isArray(raw.linkGroups) ||
+    Array.isArray(raw.groups)
+  const variant = raw.variant || raw.style || raw.variantClass
 
-	if (isDropdown) {
-		const columns = normalizeColumns(rawColumns || raw.linkGroups || raw.groups || raw.items);
-		if (!columns.length) return null;
-		return {
-			type: 'dropdown',
-			label,
-			href,
-			columns
-		};
-	}
+  if (isDropdown) {
+    const columns = normalizeColumns(rawColumns || raw.linkGroups || raw.groups || raw.items)
+    if (!columns.length) return null
+    return {
+      type: 'dropdown',
+      label,
+      href,
+      columns,
+    }
+  }
 
-	return {
-		type: 'link',
-		label,
-		href,
-		variant: isButtonType ? 'button' : variant ? String(variant) : undefined
-	};
+  return {
+    type: 'link',
+    label,
+    href,
+    variant: isButtonType ? 'button' : variant ? String(variant) : undefined,
+  }
 }
 
-function normalizeNavItems(rawItems: any): NavItem[] { 
-	if (!Array.isArray(rawItems)) return [];
-	return rawItems
-		.map(normalizeNavItem)
-		.filter((item): item is NavItem => Boolean(item))
-		.filter((item) => item.label && item.href);
+function normalizeNavItems(rawItems: any): NavItem[] {
+  if (!Array.isArray(rawItems)) return []
+  return rawItems
+    .map(normalizeNavItem)
+    .filter((item): item is NavItem => Boolean(item))
+    .filter((item) => item.label && item.href)
 }
 
-function parseCmsNavPayload(payload: any): { announcement: typeof defaultAnnouncement; items: NavItem[] } | null { // Attempts to extract and normalize navigation configuration from various possible CMS response structures
-	if (!payload || typeof payload !== 'object') return null;
-	const doc = payload.doc || payload.data?.[0] || payload.docs?.[0] || payload.data || payload;
-	if (!doc || typeof doc !== 'object') return null;
+function parseCmsNavPayload(
+  payload: any,
+): { announcement: typeof defaultAnnouncement; items: NavItem[] } | null {
+  // Attempts to extract and normalize navigation configuration from various possible CMS response structures
+  if (!payload || typeof payload !== 'object') return null
+  const doc = payload.doc || payload.data?.[0] || payload.docs?.[0] || payload.data || payload
+  if (!doc || typeof doc !== 'object') return null
 
-	const announcement = normalizeAnnouncement(doc.announcement || doc.topAnnouncement || doc.banner);
-	const items = normalizeNavItems(
-		doc.navItems || doc.navigation || doc.nav || doc.items || doc.links || doc.defaultLinks
-	);
-	if (!announcement && !items.length) return null;
+  const announcement = normalizeAnnouncement(doc.announcement || doc.topAnnouncement || doc.banner)
+  const items = normalizeNavItems(
+    doc.navItems || doc.navigation || doc.nav || doc.items || doc.links || doc.defaultLinks,
+  )
+  if (!announcement && !items.length) return null
 
-	return {
-		announcement: announcement || defaultAnnouncement,
-		items: removeDisallowedNavItems(ensureUtilityButtons(items.length ? items : defaultNavItems))
-	};
+  return {
+    announcement: announcement || defaultAnnouncement,
+    items: removeDisallowedNavItems(ensureUtilityButtons(items.length ? items : defaultNavItems)),
+  }
 }
 
-function getDropdownPanelStyle(item: NavItem & { columns: NavColumn[] }) { //Uses the CMS-provided column structure to calculate optimal dropdown width and height
-	const columns = Math.max(item.columns.length, 1);
-	const maxItemsInColumn = item.columns.reduce((count, column) => Math.max(count, column.links.length), 0);
-	const totalItems = item.columns.reduce((count, column) => count + column.links.length, 0);
-	const width = Math.max(columns * 210, 220 + maxItemsInColumn * 18, 180 + totalItems * 7);
+function getDropdownPanelStyle(item: NavItem & { columns: NavColumn[] }) {
+  //Uses the CMS-provided column structure to calculate optimal dropdown width and height
+  const columns = Math.max(item.columns.length, 1)
+  const maxItemsInColumn = item.columns.reduce(
+    (count, column) => Math.max(count, column.links.length),
+    0,
+  )
+  const totalItems = item.columns.reduce((count, column) => count + column.links.length, 0)
+  const width = Math.max(columns * 210, 220 + maxItemsInColumn * 18, 180 + totalItems * 7)
 
-	return {
-		style: `--site-nav-columns: ${columns}; --site-nav-width: ${Math.min(width, 1200)}px;`
-	};
+  return {
+    style: `--site-nav-columns: ${columns}; --site-nav-width: ${Math.min(width, 1200)}px;`,
+  }
 }
 
 async function loadNavConfig() {
-	const payloadEndpoints = [
-		'/api/globals/site-navigation?depth=2',
-		'/api/site-navigation?depth=2',
-		'/api/site-settings?depth=2',
-		'/api/globals/site-settings?depth=2',
-		'/api/pages?limit=1&where[slug][equals]=site-navigation',
-		'/api/pages?limit=1&where[slug][equals]=site-config',
-	];
+  const payloadEndpoints = [
+    '/api/globals/site-navigation?depth=2',
+    '/api/site-navigation?depth=2',
+    '/api/site-settings?depth=2',
+    '/api/globals/site-settings?depth=2',
+    '/api/pages?limit=1&where[slug][equals]=site-navigation',
+    '/api/pages?limit=1&where[slug][equals]=site-config',
+  ]
 
-	for (const baseUrl of cmsBaseUrls) {
-		for (const endpoint of payloadEndpoints) {
-			try {
-				const res = await fetch(`${baseUrl}${endpoint}`);
-				if (!res.ok) continue;
-				const data = (await res.json()) as CmsResponse;
-				const parsed = parseCmsNavPayload(data);
-				if (parsed) return parsed;
-			} catch {
-				// intentionally ignore and try next endpoint/base url
-			}
-		}
-	}
+  for (const baseUrl of cmsBaseUrls) {
+    for (const endpoint of payloadEndpoints) {
+      try {
+        const res = await fetch(`${baseUrl}${endpoint}`)
+        if (!res.ok) continue
+        const data = (await res.json()) as CmsResponse
+        const parsed = parseCmsNavPayload(data)
+        if (parsed) return parsed
+      } catch {
+        // intentionally ignore and try next endpoint/base url
+      }
+    }
+  }
 
-	return {
-		announcement: defaultAnnouncement,
-		items: removeDisallowedNavItems(ensureUtilityButtons(defaultNavItems)),
-	};
+  return {
+    announcement: defaultAnnouncement,
+    items: removeDisallowedNavItems(ensureUtilityButtons(defaultNavItems)),
+  }
 }
 
-const cmsNavConfig = await loadNavConfig();
-const announcement = cmsNavConfig.announcement;
-const navItems = cmsNavConfig.items;
+const cmsNavConfig = await loadNavConfig()
+const announcement = cmsNavConfig.announcement
+const navItems = cmsNavConfig.items
 ---
 
 <header class="site-header">
-	{announcement.enabled === false ? null : (
-		<div class="site-announcement">
-			<a class="site-announcement__link" href={announcement.href}>{announcement.text}</a>
-		</div>
-	)}
-	<div class="site-nav-shell">
-	<a class="site-brand" href="/" aria-label="Metadata home">
-			<img class="site-brand__logo" src={metadataLogoUrl} alt="Metadata logo" />
-	</a>
+  {
+    announcement.enabled === false ? null : (
+      <div class="site-announcement">
+        <a class="site-announcement__link" href={announcement.href}>
+          {announcement.text}
+        </a>
+      </div>
+    )
+  }
+  <div class="site-nav-shell">
+    <a class="site-brand" href="/" aria-label="Metadata home">
+      <img class="site-brand__logo" src={metadataLogoUrl} alt="Metadata logo" />
+    </a>
 
-		<button
-			class="site-hamburger"
-			type="button"
-			aria-expanded="false"
-			aria-controls={navId}
-			aria-label="Toggle navigation"
-		>
-			<span class="site-hamburger__bar"></span>
-			<span class="site-hamburger__bar"></span>
-			<span class="site-hamburger__bar"></span>
-		</button>
+    <button
+      class="site-hamburger"
+      type="button"
+      aria-expanded="false"
+      aria-controls={navId}
+      aria-label="Toggle navigation"
+    >
+      <span class="site-hamburger__bar"></span>
+      <span class="site-hamburger__bar"></span>
+      <span class="site-hamburger__bar"></span>
+    </button>
 
-		<nav class="site-nav" id={navId} aria-label="Primary">
-			<ul class="site-nav__list">
-				{navItems.map((item) => (
-					<li class="site-nav__item">
-						{item.type === 'dropdown' ? (
-							<div class="site-dropdown">
-								<a
-									href={item.href}
-									class="site-dropdown__trigger"
-									aria-haspopup="true"
-									aria-expanded="false"
-								>
-									{item.label}
-								</a>
-								<div
-									class="site-dropdown__panel"
-									role="menu"
-									style={getDropdownPanelStyle(item).style}
-									aria-label={`${item.label} links`}
-								>
-									{item.columns.map((column) => (
-										<div class="site-dropdown__column">
-											{column.title ? <p>{column.title}</p> : null}
-											<ul class="site-dropdown__column-list">
-												{column.links.map((linkItem) => (
-													<li>
-														<a
-															href={linkItem.href}
-															class="site-dropdown__link site-dropdown__link--mobile-safe"
-														>
-															<span class="site-dropdown__link-text">{linkItem.label}</span>
-														</a>
-													</li>
-												))}
-											</ul>
-										</div>
-									))}
-								</div>
-							</div>
-						) : (
-							<a href={item.href} class={item.variant === 'button' ? 'site-nav__cta' : ''}>
-								{item.label}
-							</a>
-						)}
-					</li>
-				))}
-			</ul>
-			<form class="site-search" role="search" action="/" method="get">
-				<label for="site-search" class="sr-only">Search</label>
-				<input id="site-search" class="site-search__input" name="q" type="search" placeholder="Search topics..." />
-				<button class="site-search__button" type="submit" aria-label="Search">Search</button>
-			</form>
-		</nav>
-	</div>
+    <nav class="site-nav" id={navId} aria-label="Primary">
+      <ul class="site-nav__list">
+        {
+          navItems.map((item) => (
+            <li class="site-nav__item">
+              {item.type === 'dropdown' ? (
+                <div class="site-dropdown">
+                  <a
+                    href={item.href}
+                    class="site-dropdown__trigger"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    {item.label}
+                  </a>
+                  <div
+                    class="site-dropdown__panel"
+                    role="menu"
+                    style={getDropdownPanelStyle(item).style}
+                    aria-label={`${item.label} links`}
+                  >
+                    {item.columns.map((column) => (
+                      <div class="site-dropdown__column">
+                        {column.title ? <p>{column.title}</p> : null}
+                        <ul class="site-dropdown__column-list">
+                          {column.links.map((linkItem) => (
+                            <li>
+                              <a
+                                href={linkItem.href}
+                                class="site-dropdown__link site-dropdown__link--mobile-safe"
+                              >
+                                <span class="site-dropdown__link-text">{linkItem.label}</span>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <a href={item.href} class={item.variant === 'button' ? 'site-nav__cta' : ''}>
+                  {item.label}
+                </a>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+      <form class="site-search" role="search" action="/" method="get">
+        <label for="site-search" class="sr-only">Search</label>
+        <input
+          id="site-search"
+          class="site-search__input"
+          name="q"
+          type="search"
+          placeholder="Search topics..."
+        />
+        <button class="site-search__button" type="submit" aria-label="Search">Search</button>
+      </form>
+    </nav>
+  </div>
 </header>
 
 <script>
-	const shell = document.querySelector('.site-nav-shell');
-	const toggle = document.querySelector('.site-hamburger');
-	const dropdownLinks = document.querySelectorAll('.site-dropdown__trigger');
-	const dropdowns = document.querySelectorAll('.site-dropdown');
-	const isTouchDevice =
-		window.matchMedia('(hover: none), (pointer: coarse)').matches || 'ontouchstart' in window;
-	const isMobileNav = () => window.matchMedia('(max-width: 960px)').matches;
+  const shell = document.querySelector('.site-nav-shell')
+  const toggle = document.querySelector('.site-hamburger')
+  const dropdownLinks = document.querySelectorAll('.site-dropdown__trigger')
+  const dropdowns = document.querySelectorAll('.site-dropdown')
+  const isTouchDevice =
+    window.matchMedia('(hover: none), (pointer: coarse)').matches || 'ontouchstart' in window
+  const isMobileNav = () => window.matchMedia('(max-width: 960px)').matches
 
-	if (shell && toggle) {
-		toggle.addEventListener('click', () => {
-			const isOpen = shell.classList.toggle('menu-open');
-			toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-		});
+  if (shell && toggle) {
+    toggle.addEventListener('click', () => {
+      const isOpen = shell.classList.toggle('menu-open')
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false')
+    })
 
-		window.addEventListener('resize', () => {
-			if (window.innerWidth > 960 && shell.classList.contains('menu-open')) {
-			shell.classList.remove('menu-open');
-			toggle.setAttribute('aria-expanded', 'false');
-		}
-	});
-	}
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 960 && shell.classList.contains('menu-open')) {
+        shell.classList.remove('menu-open')
+        toggle.setAttribute('aria-expanded', 'false')
+      }
+    })
+  }
 
-	if (dropdownLinks.length && dropdowns.length) {
-		const closeAll = () => {
-			dropdowns.forEach((dropdown) => {
-				dropdown.classList.remove('is-open');
-			});
-			dropdownLinks.forEach((link) => {
-				link.setAttribute('aria-expanded', 'false');
-			});
-		};
+  if (dropdownLinks.length && dropdowns.length) {
+    const closeAll = () => {
+      dropdowns.forEach((dropdown) => {
+        dropdown.classList.remove('is-open')
+      })
+      dropdownLinks.forEach((link) => {
+        link.setAttribute('aria-expanded', 'false')
+      })
+    }
 
-		dropdownLinks.forEach((link) => {
-			link.addEventListener('click', (event) => {
-				if (!isMobileNav() && !isTouchDevice) return;
-				const dropdown = link.closest('.site-dropdown');
-				if (!dropdown) return;
-				if (dropdown.classList.contains('is-open')) return;
+    dropdownLinks.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        if (!isMobileNav() && !isTouchDevice) return
+        const dropdown = link.closest('.site-dropdown')
+        if (!dropdown) return
+        if (dropdown.classList.contains('is-open')) return
 
-				event.preventDefault();
-				closeAll();
-				dropdown.classList.add('is-open');
-				link.setAttribute('aria-expanded', 'true');
-			});
-		});
+        event.preventDefault()
+        closeAll()
+        dropdown.classList.add('is-open')
+        link.setAttribute('aria-expanded', 'true')
+      })
+    })
 
-		document.addEventListener('click', (event) => {
-			if (event.target instanceof Element && event.target.closest('.site-dropdown')) return;
-			closeAll();
-		});
+    document.addEventListener('click', (event) => {
+      if (event.target instanceof Element && event.target.closest('.site-dropdown')) return
+      closeAll()
+    })
 
-		document.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape') closeAll();
-		});
-	}
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeAll()
+    })
+  }
 </script>
 
 <style>
-	/* Desktop-first layout (default) */
-	.site-header {
-		position: sticky;
-		top: 0;
-		left: 0;
-		right: 0;
-		z-index: 2147483647 !important;
-		background: var(--color-surface-alt);
-		border-bottom: 1px solid var(--color-border);
-	}
-
-	.site-announcement {
-		padding: 0.35rem 1rem;
-		text-align: center;
-		border-bottom: 1px solid var(--color-border);
-		background: var(--color-surface-soft);
-		font-size: 0.8rem;
-	}
-
-	.site-announcement__link {
-		color: var(--color-text);
-		text-decoration: none;
-	}
-
-	.site-nav-shell {
-		display: grid;
-		grid-template-columns: auto 1fr auto;
-		align-items: center;
-		width: 100%;
-		max-width: 100%;
-		overflow-x: clip;
-		padding: 0.7rem 1rem;
-		box-sizing: border-box;
-		column-gap: 1rem;
-		position: relative;
-	}
-
-	.site-brand__logo {
-		width: 132px;
-		height: 32px;
-		display: block;
-	}
-
-	.site-brand {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.55rem;
-		color: var(--color-text);
-		text-decoration: none;
-		font-weight: 800;
-		font-size: 1.1rem;
-		letter-spacing: 0.01em;
-	}
-
-	.site-brand:hover span {
-		opacity: 0.85;
-	}
-
-	.site-nav {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 1rem;
-		width: 100%;
-	}
-
-	.site-nav__list {
-		list-style: none;
-		display: flex;
-		align-items: center;
-		gap: 0.55rem;
-		margin: 0 auto;
-		padding: 0;
-	}
-
-	.site-nav__item {
-		position: relative;
-		z-index: 1;
-	}
-
-	.site-dropdown {
-		position: relative;
-	}
-
-	.site-nav a,
-	.site-dropdown__trigger {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.45rem 0.65rem;
-		color: var(--color-text);
-		text-decoration: none;
-		font-size: 0.92rem;
-		font-weight: 600;
-		white-space: nowrap;
-	}
-
-	.site-dropdown__trigger::after {
-		content: '▾';
-		font-size: 0.76rem;
-		margin-left: 0.28rem;
-		color: var(--color-muted);
-	}
-
-	.site-dropdown__panel {
-		position: absolute;
-		top: 100%;
-		left: 50%;
-		transform: translateX(-50%);
-		z-index: 2147483647;
-		display: grid;
-		grid-template-columns: repeat(var(--site-nav-columns, 3), minmax(150px, 1fr));
-		gap: 0.85rem;
-		width: min(var(--site-nav-width, 620px), 88vw);
-		padding: 0.95rem;
-		border: 1px solid var(--color-border);
-		background: var(--color-surface);
-		opacity: 0;
-		visibility: hidden;
-		pointer-events: none;
-		transition:
-			opacity 160ms ease,
-			transform 160ms ease,
-			visibility 160ms ease;
-		box-shadow: 0 14px 28px rgba(2, 17, 36, 0.14);
-	}
-
-	.site-dropdown:hover .site-dropdown__panel,
-	.site-dropdown:focus-within .site-dropdown__panel,
-	.site-dropdown.is-open .site-dropdown__panel {
-		opacity: 1;
-		visibility: visible;
-		pointer-events: auto;
-		transform: translateX(-50%);
-	}
-
-	.site-dropdown__column p {
-		margin: 0 0 0.45rem;
-		font-size: 0.73rem;
-		font-weight: 700;
-		color: var(--color-muted);
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-	}
-
-	.site-dropdown__column-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		gap: 0.3rem;
-	}
-
-	.site-dropdown__link {
-		display: block;
-		padding: 0.3rem 0.1rem;
-		font-size: 0.87rem;
-		font-weight: 500;
-		color: var(--color-text);
-	}
-
-	.site-dropdown__link {
-		color: var(--color-text);
-		text-decoration: none;
-	}
-
-	.site-dropdown__link-text {
-		display: inline;
-		color: inherit;
-		opacity: 1;
-	}
-
-	.site-nav a:hover,
-	.site-dropdown__link:hover {
-		background: var(--color-surface-soft);
-	}
-
-	.site-dropdown__link--mobile-safe {
-		color: var(--color-text) !important;
-	}
-
-	.site-nav__cta {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0.48rem 0.9rem;
-		border-radius: 0.45rem;
-		background: var(--color-accent);
-		color: #fff;
-		font-size: 0.92rem;
-		font-weight: 500;
-		font-weight: 700;
-		text-decoration: none;
-		white-space: nowrap;
-		background: var(--color-accent);
-		color: #ffffff !important;
-	}
-
-	.site-nav__cta:hover {
-		background: var(--color-accent-hover);
-		color: #ffffff;
-	}
-
-	.site-search {
-		margin-left: 0;
-		display: flex;
-		align-items: stretch;
-		gap: 0.45rem;
-	}
-
-	.site-search__input {
-		min-width: 170px;
-		width: 15rem;
-		max-width: 22vw;
-		padding: 0.43rem 0.6rem;
-		border: 1px solid var(--color-border);
-		border-radius: 0.45rem;
-		background: var(--color-surface);
-		color: var(--color-text);
-		font-size: 0.9rem;
-	}
-
-	.site-search__input:focus {
-		outline: 2px solid var(--color-accent);
-		outline-offset: 1px;
-	}
-
-	.site-search__button {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0.43rem 0.75rem;
-		margin-right: 0.5rem;
-		border: 1px solid var(--color-accent);
-		background: var(--color-accent);
-		color: #fff;
-		font-size: 0.86rem;
-		font-weight: 700;
-		cursor: pointer;
-		border-radius: 0.45rem;
-	}
-
-	.site-search__button:hover {
-		background: var(--color-accent-hover);
-		border-color: var(--color-accent-hover);
-	}
-
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
-	}
-
-	.site-hamburger {
-		display: none;
-		border: 1px solid var(--color-border);
-		background: var(--color-surface);
-		padding: 0.4rem 0.45rem;
-		cursor: pointer;
-	}
-
-	.site-hamburger__bar {
-		display: block;
-		width: 1rem;
-		height: 2px;
-		background: var(--color-text);
-		margin: 0.16rem 0;
-	}
-
-	/* Hamburger layout: shown below 960px */
-	@media (max-width: 960px) {
-		/* Hamburger-only nav states */
-		.site-dropdown.is-open .site-dropdown__panel,
-		.site-dropdown.is-open .site-dropdown__panel * {
-			color: var(--color-text) !important;
-			text-shadow: none !important;
-		}
-
-		.site-dropdown.is-open .site-dropdown__panel ul,
-		.site-dropdown.is-open .site-dropdown__column-list {
-			background: var(--color-surface);
-		}
-
-		.site-dropdown.is-open .site-dropdown__column li {
-			list-style: none !important;
-		}
-
-		.site-dropdown.is-open .site-dropdown__link {
-			display: block !important;
-			color: var(--color-text) !important;
-			font-size: 0.87rem !important;
-			line-height: 1.35 !important;
-			background: transparent !important;
-		}
-
-		/* Hamburger container */
-		.site-nav-shell {
-			grid-template-columns: 1fr auto;
-			max-width: 100%;
-			overflow-x: clip;
-			padding-right: 1.25rem;
-		}
-
-		.site-brand span {
-			display: inline;
-			font-size: 1rem;
-			letter-spacing: 0.01em;
-		}
-
-		.site-hamburger {
-			display: block;
-			justify-self: end;
-			margin-right: 0;
-			padding-right: 0.55rem;
-			padding-left: 0.55rem;
-		}
-
-		.site-nav {
-			grid-column: 1 / -1;
-			display: grid;
-			grid-template-columns: 1fr;
-			justify-content: stretch;
-			max-height: 0;
-			opacity: 0;
-			overflow: hidden;
-			pointer-events: none;
-			transition: max-height 220ms ease, opacity 220ms ease;
-			place-items: stretch;
-		}
-
-		.site-nav-shell.menu-open .site-nav {
-			max-height: 85vh;
-			opacity: 1;
-			pointer-events: auto;
-			padding-top: 0.4rem;
-		}
-
-		.site-nav__list,
-		.site-search {
-			flex-direction: column;
-			margin: 0;
-		}
-
-		.site-nav__list {
-			flex-direction: column;
-		}
-
-		.site-nav__list,
-		.site-search {
-			align-items: stretch;
-		}
-
-		.site-nav a,
-		.site-nav__cta,
-		.site-search__input,
-		.site-search__button {
-			width: 100%;
-			padding: 0.7rem 0.25rem;
-		}
-
-		.site-search {
-			max-width: 100%;
-			width: 100%;
-			flex-direction: row;
-			align-items: stretch;
-			gap: 0.45rem;
-		}
-
-		.site-search__button,
-		.site-search__input {
-			max-width: none;
-		}
-
-		.site-dropdown__panel {
-			position: static;
-			left: auto;
-			transform: none;
-			width: 100%;
-			border: none;
-			background: var(--color-surface);
-			box-shadow: none;
-			opacity: 0;
-			visibility: hidden;
-			pointer-events: auto;
-			grid-template-columns: 1fr;
-			color: var(--color-text);
-			padding: 0;
-			max-height: 0;
-			overflow: hidden;
-			transition:
-				opacity 220ms ease,
-				visibility 220ms ease,
-				max-height 220ms ease;
-		}
-
-		.site-dropdown.is-open .site-dropdown__panel {
-			opacity: 1;
-			visibility: visible;
-			max-height: 1200px;
-			padding: 0.45rem 0.2rem 0;
-		}
-
-		.site-dropdown.is-open .site-dropdown__panel {
-			background-color: var(--color-surface);
-		}
-
-		.site-dropdown.is-open .site-dropdown__panel {
-			background: var(--color-surface) !important;
-			color: var(--color-text) !important;
-			text-shadow: none !important;
-		}
-
-		.site-dropdown.is-open .site-dropdown__link {
-			display: block !important;
-			color: var(--color-text) !important;
-			background: transparent !important;
-			text-decoration: none !important;
-			opacity: 1 !important;
-			pointer-events: auto;
-		}
-
-		.site-dropdown.is-open .site-dropdown__link-text {
-			display: inline !important;
-			color: var(--color-text) !important;
-			opacity: 1 !important;
-		}
-
-		.site-dropdown.is-open .site-dropdown__column p,
-		.site-dropdown.is-open .site-dropdown__link,
-		.site-dropdown.is-open .site-dropdown__link-text {
-			color: var(--color-text, #162130) !important;
-			opacity: 1 !important;
-			visibility: visible !important;
-			text-shadow: none !important;
-			-webkit-text-fill-color: unset !important;
-		}
-
-		.site-dropdown.is-open .site-dropdown__link:visited,
-		.site-dropdown.is-open .site-dropdown__link:hover,
-		.site-dropdown.is-open .site-dropdown__link:focus {
-			color: var(--color-text) !important;
-			background: var(--color-surface-soft) !important;
-		}
-
-		.site-dropdown__column-list {
-			display: block;
-		}
-
-		.site-dropdown__column li {
-			list-style: none;
-		}
-
-		.site-dropdown__trigger::after {
-			content: '';
-		}
-
-		.site-dropdown__column p {
-			font-size: 0.67rem;
-			margin: 0.55rem 0 0.3rem;
-		}
-	}
-
-	@media (max-width: 960px) {
-		.site-nav__item,
-		.site-dropdown,
-		.site-dropdown__column,
-		.site-dropdown__column-list,
-		.site-dropdown__column li {
-			width: 100%;
-		}
-
-		.site-nav__item > a,
-		.site-dropdown__trigger {
-			display: flex !important;
-			align-items: center !important;
-			justify-content: space-between !important;
-			width: 100% !important;
-			padding: 0.72rem 0.6rem !important;
-			color: var(--color-text) !important;
-			background: var(--color-surface) !important;
-			text-decoration: none !important;
-			font-size: 0.95rem !important;
-			font-weight: 700 !important;
-			opacity: 1 !important;
-			visibility: visible !important;
-			-webkit-text-fill-color: var(--color-text) !important;
-		}
-
-		.site-dropdown.is-open .site-dropdown__panel {
-			display: grid !important;
-			width: 100% !important;
-			padding: 0.2rem 0 0.45rem !important;
-			margin-top: 0.1rem !important;
-			background: var(--color-surface) !important;
-			opacity: 1 !important;
-			visibility: visible !important;
-			pointer-events: auto !important;
-			left: auto !important;
-			transform: none !important;
-		}
-
-		.site-dropdown__column p {
-			display: block !important;
-			margin: 0.5rem 0 0.25rem !important;
-			padding: 0 0.6rem !important;
-			color: var(--color-muted) !important;
-			opacity: 1 !important;
-			visibility: visible !important;
-			font-size: 0.7rem !important;
-			font-weight: 700 !important;
-			letter-spacing: 0.08em !important;
-			text-transform: uppercase !important;
-			-webkit-text-fill-color: var(--color-muted) !important;
-		}
-
-		.site-dropdown__column-list {
-			display: grid !important;
-			gap: 0 !important;
-			background: var(--color-surface) !important;
-		}
-
-		.site-dropdown__link,
-		.site-dropdown__link:visited,
-		.site-dropdown__link:hover,
-		.site-dropdown__link:focus,
-		.site-dropdown__link--mobile-safe {
-			display: block !important;
-			width: 100% !important;
-			padding: 0.72rem 0.6rem !important;
-			color: var(--color-text) !important;
-			background: transparent !important;
-			text-decoration: none !important;
-			font-size: 0.92rem !important;
-			line-height: 1.35 !important;
-			opacity: 1 !important;
-			visibility: visible !important;
-			text-shadow: none !important;
-			-webkit-text-fill-color: var(--color-text) !important;
-		}
-
-		.site-dropdown__link-text {
-			display: inline !important;
-			color: var(--color-text) !important;
-			opacity: 1 !important;
-			visibility: visible !important;
-			text-shadow: none !important;
-			-webkit-text-fill-color: var(--color-text) !important;
-		}
-
-		.site-dropdown__link:hover,
-		.site-dropdown__link:focus {
-			background: var(--color-surface-soft) !important;
-		}
-	}
+  /* Desktop-first layout (default) */
+  .site-header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2147483647 !important;
+    background: var(--color-surface-alt);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .site-announcement {
+    padding: 0.35rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-soft);
+    font-size: 0.8rem;
+  }
+
+  .site-announcement__link {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .site-nav-shell {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    padding: 0.7rem 1rem;
+    box-sizing: border-box;
+    column-gap: 1rem;
+    position: relative;
+  }
+
+  .site-brand__logo {
+    width: 132px;
+    height: 32px;
+    display: block;
+  }
+
+  .site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.01em;
+  }
+
+  .site-brand:hover span {
+    opacity: 0.85;
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .site-nav__list {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  .site-nav__item {
+    position: relative;
+    z-index: 1;
+  }
+
+  .site-dropdown {
+    position: relative;
+  }
+
+  .site-nav a,
+  .site-dropdown__trigger {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.65rem;
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .site-dropdown__trigger::after {
+    content: '▾';
+    font-size: 0.76rem;
+    margin-left: 0.28rem;
+    color: var(--color-muted);
+  }
+
+  .site-dropdown__panel {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483647;
+    display: grid;
+    grid-template-columns: repeat(var(--site-nav-columns, 3), minmax(150px, 1fr));
+    gap: 0.85rem;
+    width: min(var(--site-nav-width, 620px), 88vw);
+    padding: 0.95rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease,
+      visibility 160ms ease;
+    box-shadow: 0 14px 28px rgba(2, 17, 36, 0.14);
+  }
+
+  .site-dropdown:hover .site-dropdown__panel,
+  .site-dropdown:focus-within .site-dropdown__panel,
+  .site-dropdown.is-open .site-dropdown__panel {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%);
+  }
+
+  .site-dropdown__column p {
+    margin: 0 0 0.45rem;
+    font-size: 0.73rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .site-dropdown__column-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .site-dropdown__link {
+    display: block;
+    padding: 0.3rem 0.1rem;
+    font-size: 0.87rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  .site-dropdown__link {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .site-dropdown__link-text {
+    display: inline;
+    color: inherit;
+    opacity: 1;
+  }
+
+  .site-nav a:hover,
+  .site-dropdown__link:hover {
+    background: var(--color-surface-soft);
+  }
+
+  .site-dropdown__link--mobile-safe {
+    color: var(--color-text) !important;
+  }
+
+  .site-nav__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.48rem 0.9rem;
+    border-radius: 0.45rem;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 500;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    background: var(--color-accent);
+    color: #ffffff !important;
+  }
+
+  .site-nav__cta:hover {
+    background: var(--color-accent-hover);
+    color: #ffffff;
+  }
+
+  .site-search {
+    margin-left: 0;
+    display: flex;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+
+  .site-search__input {
+    min-width: 170px;
+    width: 15rem;
+    max-width: 22vw;
+    padding: 0.43rem 0.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.45rem;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 0.9rem;
+  }
+
+  .site-search__input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+
+  .site-search__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.43rem 0.75rem;
+    margin-right: 0.5rem;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 0.45rem;
+  }
+
+  .site-search__button:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .site-hamburger {
+    display: none;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: 0.4rem 0.45rem;
+    cursor: pointer;
+  }
+
+  .site-hamburger__bar {
+    display: block;
+    width: 1rem;
+    height: 2px;
+    background: var(--color-text);
+    margin: 0.16rem 0;
+  }
+
+  /* Hamburger layout: shown below 960px */
+  @media (max-width: 960px) {
+    /* Hamburger-only nav states */
+    .site-dropdown.is-open .site-dropdown__panel,
+    .site-dropdown.is-open .site-dropdown__panel * {
+      color: var(--color-text) !important;
+      text-shadow: none !important;
+    }
+
+    .site-dropdown.is-open .site-dropdown__panel ul,
+    .site-dropdown.is-open .site-dropdown__column-list {
+      background: var(--color-surface);
+    }
+
+    .site-dropdown.is-open .site-dropdown__column li {
+      list-style: none !important;
+    }
+
+    .site-dropdown.is-open .site-dropdown__link {
+      display: block !important;
+      color: var(--color-text) !important;
+      font-size: 0.87rem !important;
+      line-height: 1.35 !important;
+      background: transparent !important;
+    }
+
+    /* Hamburger container */
+    .site-nav-shell {
+      grid-template-columns: 1fr auto;
+      max-width: 100%;
+      overflow-x: clip;
+      padding-right: 1.25rem;
+    }
+
+    .site-brand span {
+      display: inline;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+    }
+
+    .site-hamburger {
+      display: block;
+      justify-self: end;
+      margin-right: 0;
+      padding-right: 0.55rem;
+      padding-left: 0.55rem;
+    }
+
+    .site-nav {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr;
+      justify-content: stretch;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transition:
+        max-height 220ms ease,
+        opacity 220ms ease;
+      place-items: stretch;
+    }
+
+    .site-nav-shell.menu-open .site-nav {
+      max-height: 85vh;
+      opacity: 1;
+      pointer-events: auto;
+      padding-top: 0.4rem;
+    }
+
+    .site-nav__list,
+    .site-search {
+      flex-direction: column;
+      margin: 0;
+    }
+
+    .site-nav__list {
+      flex-direction: column;
+    }
+
+    .site-nav__list,
+    .site-search {
+      align-items: stretch;
+    }
+
+    .site-nav a,
+    .site-nav__cta,
+    .site-search__input,
+    .site-search__button {
+      width: 100%;
+      padding: 0.7rem 0.25rem;
+    }
+
+    .site-search {
+      max-width: 100%;
+      width: 100%;
+      flex-direction: row;
+      align-items: stretch;
+      gap: 0.45rem;
+    }
+
+    .site-search__button,
+    .site-search__input {
+      max-width: none;
+    }
+
+    .site-dropdown__panel {
+      position: static;
+      left: auto;
+      transform: none;
+      width: 100%;
+      border: none;
+      background: var(--color-surface);
+      box-shadow: none;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: auto;
+      grid-template-columns: 1fr;
+      color: var(--color-text);
+      padding: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition:
+        opacity 220ms ease,
+        visibility 220ms ease,
+        max-height 220ms ease;
+    }
+
+    .site-dropdown.is-open .site-dropdown__panel {
+      opacity: 1;
+      visibility: visible;
+      max-height: 1200px;
+      padding: 0.45rem 0.2rem 0;
+    }
+
+    .site-dropdown.is-open .site-dropdown__panel {
+      background-color: var(--color-surface);
+    }
+
+    .site-dropdown.is-open .site-dropdown__panel {
+      background: var(--color-surface) !important;
+      color: var(--color-text) !important;
+      text-shadow: none !important;
+    }
+
+    .site-dropdown.is-open .site-dropdown__link {
+      display: block !important;
+      color: var(--color-text) !important;
+      background: transparent !important;
+      text-decoration: none !important;
+      opacity: 1 !important;
+      pointer-events: auto;
+    }
+
+    .site-dropdown.is-open .site-dropdown__link-text {
+      display: inline !important;
+      color: var(--color-text) !important;
+      opacity: 1 !important;
+    }
+
+    .site-dropdown.is-open .site-dropdown__column p,
+    .site-dropdown.is-open .site-dropdown__link,
+    .site-dropdown.is-open .site-dropdown__link-text {
+      color: var(--color-text, #162130) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      text-shadow: none !important;
+      -webkit-text-fill-color: unset !important;
+    }
+
+    .site-dropdown.is-open .site-dropdown__link:visited,
+    .site-dropdown.is-open .site-dropdown__link:hover,
+    .site-dropdown.is-open .site-dropdown__link:focus {
+      color: var(--color-text) !important;
+      background: var(--color-surface-soft) !important;
+    }
+
+    .site-dropdown__column-list {
+      display: block;
+    }
+
+    .site-dropdown__column li {
+      list-style: none;
+    }
+
+    .site-dropdown__trigger::after {
+      content: '';
+    }
+
+    .site-dropdown__column p {
+      font-size: 0.67rem;
+      margin: 0.55rem 0 0.3rem;
+    }
+  }
+
+  @media (max-width: 960px) {
+    .site-nav__item,
+    .site-dropdown,
+    .site-dropdown__column,
+    .site-dropdown__column-list,
+    .site-dropdown__column li {
+      width: 100%;
+    }
+
+    .site-nav__item > a,
+    .site-dropdown__trigger {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      width: 100% !important;
+      padding: 0.72rem 0.6rem !important;
+      color: var(--color-text) !important;
+      background: var(--color-surface) !important;
+      text-decoration: none !important;
+      font-size: 0.95rem !important;
+      font-weight: 700 !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      -webkit-text-fill-color: var(--color-text) !important;
+    }
+
+    .site-dropdown.is-open .site-dropdown__panel {
+      display: grid !important;
+      width: 100% !important;
+      padding: 0.2rem 0 0.45rem !important;
+      margin-top: 0.1rem !important;
+      background: var(--color-surface) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      left: auto !important;
+      transform: none !important;
+    }
+
+    .site-dropdown__column p {
+      display: block !important;
+      margin: 0.5rem 0 0.25rem !important;
+      padding: 0 0.6rem !important;
+      color: var(--color-muted) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      font-size: 0.7rem !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.08em !important;
+      text-transform: uppercase !important;
+      -webkit-text-fill-color: var(--color-muted) !important;
+    }
+
+    .site-dropdown__column-list {
+      display: grid !important;
+      gap: 0 !important;
+      background: var(--color-surface) !important;
+    }
+
+    .site-dropdown__link,
+    .site-dropdown__link:visited,
+    .site-dropdown__link:hover,
+    .site-dropdown__link:focus,
+    .site-dropdown__link--mobile-safe {
+      display: block !important;
+      width: 100% !important;
+      padding: 0.72rem 0.6rem !important;
+      color: var(--color-text) !important;
+      background: transparent !important;
+      text-decoration: none !important;
+      font-size: 0.92rem !important;
+      line-height: 1.35 !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      text-shadow: none !important;
+      -webkit-text-fill-color: var(--color-text) !important;
+    }
+
+    .site-dropdown__link-text {
+      display: inline !important;
+      color: var(--color-text) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      text-shadow: none !important;
+      -webkit-text-fill-color: var(--color-text) !important;
+    }
+
+    .site-dropdown__link:hover,
+    .site-dropdown__link:focus {
+      background: var(--color-surface-soft) !important;
+    }
+  }
 </style>

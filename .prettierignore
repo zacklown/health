@@ -1,0 +1,16 @@
+node_modules
+.pnpm-store
+.git
+dist
+build
+coverage
+.astro
+.next
+.next-build
+apps/cms/health-cms/.next
+apps/cms/health-cms/.next-build
+apps/frontend/dist
+apps/frontend/.astro
+frontend-dev.log
+frontend-dev.err.log
+activity-mobile-nav.png
