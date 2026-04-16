@@ -59,184 +59,209 @@ export type SupportedTimezones =
   | 'Pacific/Guam'
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
-  | 'Pacific/Fiji';
+  | 'Pacific/Fiji'
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
-  };
-  blocks: {};
+    users: UserAuthOperations
+  }
+  blocks: {}
   collections: {
-    users: User;
-    media: Media;
-    pages: Page;
-    'dictionary-entries': DictionaryEntry;
-    'payload-kv': PayloadKv;
-    'payload-locked-documents': PayloadLockedDocument;
-    'payload-preferences': PayloadPreference;
-    'payload-migrations': PayloadMigration;
-  };
-  collectionsJoins: {};
+    users: User
+    media: Media
+    tags: Tag
+    pages: Page
+    'dictionary-entries': DictionaryEntry
+    'payload-kv': PayloadKv
+    'payload-locked-documents': PayloadLockedDocument
+    'payload-preferences': PayloadPreference
+    'payload-migrations': PayloadMigration
+  }
+  collectionsJoins: {}
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
-    pages: PagesSelect<false> | PagesSelect<true>;
-    'dictionary-entries': DictionaryEntriesSelect<false> | DictionaryEntriesSelect<true>;
-    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
-    'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
-    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
-    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
-  };
+    users: UsersSelect<false> | UsersSelect<true>
+    media: MediaSelect<false> | MediaSelect<true>
+    tags: TagsSelect<false> | TagsSelect<true>
+    pages: PagesSelect<false> | PagesSelect<true>
+    'dictionary-entries': DictionaryEntriesSelect<false> | DictionaryEntriesSelect<true>
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
+    'payload-locked-documents':
+      | PayloadLockedDocumentsSelect<false>
+      | PayloadLockedDocumentsSelect<true>
+    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>
+    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>
+  }
   db: {
-    defaultIDType: number;
-  };
-  fallbackLocale: null;
+    defaultIDType: number
+  }
+  fallbackLocale: null
   globals: {
-    'site-navigation': SiteNavigation;
-    'home-page': HomePage;
-  };
+    'site-navigation': SiteNavigation
+    'home-page': HomePage
+  }
   globalsSelect: {
-    'site-navigation': SiteNavigationSelect<false> | SiteNavigationSelect<true>;
-    'home-page': HomePageSelect<false> | HomePageSelect<true>;
-  };
-  locale: null;
-  user: User;
+    'site-navigation': SiteNavigationSelect<false> | SiteNavigationSelect<true>
+    'home-page': HomePageSelect<false> | HomePageSelect<true>
+  }
+  locale: null
+  user: User
   jobs: {
-    tasks: unknown;
-    workflows: unknown;
-  };
+    tasks: unknown
+    workflows: unknown
+  }
 }
 export interface UserAuthOperations {
   forgotPassword: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   login: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   registerFirstUser: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   unlock: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
-  id: number;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
+  id: number
+  updatedAt: string
+  createdAt: string
+  email: string
+  resetPasswordToken?: string | null
+  resetPasswordExpiration?: string | null
+  salt?: string | null
+  hash?: string | null
+  loginAttempts?: number | null
+  lockUntil?: string | null
   sessions?:
     | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
+        id: string
+        createdAt?: string | null
+        expiresAt: string
       }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
+    | null
+  password?: string | null
+  collection: 'users'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
+  id: number
+  alt: string
+  updatedAt: string
+  createdAt: string
+  url?: string | null
+  thumbnailURL?: string | null
+  filename?: string | null
+  mimeType?: string | null
+  filesize?: number | null
+  width?: number | null
+  height?: number | null
+  focalX?: number | null
+  focalY?: number | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number
+  /**
+   * Human-readable tag label shown in the CMS and frontend.
+   */
+  name: string
+  /**
+   * Normalized tag slug used for future filtering and archive URLs.
+   */
+  slug: string
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
 export interface Page {
-  id: number;
-  title: string;
+  id: number
+  title: string
   /**
    * URL slug, e.g. magnesium-glycinate
    */
-  slug: string;
-  category: 'Foundations' | 'Principles' | 'Foods' | 'Supplements' | 'Diets' | 'Studies' | 'General';
-  summary: string;
+  slug: string
+  category: 'Foundations' | 'Principles' | 'Foods' | 'Supplements' | 'Diets' | 'Studies' | 'General'
+  summary: string
+  /**
+   * Select from previously used tags or create a new tag from the relation drawer.
+   */
+  tags?: (number | Tag)[] | null
   /**
    * Turn this off for site-information pages and other articles that should not display the rating badges.
    */
-  showArticleRatings: boolean;
+  showArticleRatings: boolean
   /**
    * Overall practical recommendation strength using your Low-Pebble to High-Boulder scale.
    */
-  rockRating?: ('low-pebble' | 'medium-rock' | 'high-rock' | 'high-boulder') | null;
+  rockRating?: ('low-pebble' | 'medium-rock' | 'high-rock' | 'high-boulder') | null
   /**
    * Overall confidence in the evidence base from Low to High.
    */
-  scientificEvidence?: ('low' | 'moderate-low' | 'moderate' | 'moderate-high' | 'high') | null;
-  rockRatingScore?: number | null;
-  scientificEvidenceScore?: number | null;
+  scientificEvidence?: ('low' | 'moderate-low' | 'moderate' | 'moderate-high' | 'high') | null
+  rockRatingScore?: number | null
+  scientificEvidenceScore?: number | null
   /**
    * Optional primary image displayed near the top of the article.
    */
-  heroImage?: (number | null) | Media;
+  heroImage?: (number | null) | Media
   /**
    * Optional caption shown below the primary article image.
    */
-  heroImageCaption?: string | null;
+  heroImageCaption?: string | null
   /**
    * Primary article template. Build the article as repeatable sections with subheadings, images, and collapsible citation/study tables.
    */
   sections?:
     | {
-        heading: string;
+        heading: string
         /**
          * Choose the semantic heading level for this section. Use H3/H4 for subsections nested under earlier sections.
          */
-        headingLevel: 'h2' | 'h3' | 'h4';
+        headingLevel: 'h2' | 'h3' | 'h4'
         /**
          * Optional section content in Markdown. Leave blank when a heading is only used to introduce nested subsections.
          */
-        body?: string | null;
+        body?: string | null
         /**
          * Optional image displayed with this section.
          */
-        image?: (number | null) | Media;
+        image?: (number | null) | Media
         /**
          * Choose which side of the section the image should occupy.
          */
-        imagePlacement?: ('left' | 'right') | null;
+        imagePlacement?: ('left' | 'right') | null
         /**
          * Controls how much width the image takes inside the section layout.
          */
-        imageSize?: ('small' | 'medium' | 'large') | null;
+        imageSize?: ('small' | 'medium' | 'large') | null
         /**
          * Exact width of the section image relative to the article column.
          */
-        imageWidth?: ('25' | '30' | '35' | '38' | '42' | '46' | '50' | '55' | '60') | null;
+        imageWidth?: ('25' | '30' | '35' | '38' | '42' | '46' | '50' | '55' | '60') | null
         /**
          * Optional caption shown below the section image.
          */
-        imageCaption?: string | null;
+        imageCaption?: string | null
         /**
          * Each item renders as a collapsible dropdown for this section. Put one or more study rows inside each dropdown.
          */
@@ -245,416 +270,433 @@ export interface Page {
               /**
                * Dropdown label, for example "Clinical studies" or "Mechanistic evidence".
                */
-              title: string;
+              title: string
               /**
                * Optional short note shown above the table when the dropdown is opened.
                */
-              intro?: string | null;
+              intro?: string | null
               /**
                * Rows for the citation / study table inside this dropdown.
                */
               studies: {
-                citation: string;
-                studyType?: string | null;
-                finding: string;
+                citation: string
+                studyType?: string | null
+                finding: string
                 /**
                  * Optional URL to the paper, DOI, PubMed, or journal page.
                  */
-                link?: string | null;
-                id?: string | null;
-              }[];
-              id?: string | null;
+                link?: string | null
+                id?: string | null
+              }[]
+              id?: string | null
             }[]
-          | null;
-        id?: string | null;
+          | null
+        id?: string | null
       }[]
-    | null;
+    | null
   /**
    * Legacy full-article Markdown field kept for older articles. New articles should use the structured Sections field above.
    */
-  body?: string | null;
+  body?: string | null
   /**
    * Flag to highlight this item in the New section.
    */
-  isNew?: boolean | null;
+  isNew?: boolean | null
   /**
    * Exclude this article from the random article button and random article page.
    */
-  excludeFromRandom?: boolean | null;
+  excludeFromRandom?: boolean | null
   /**
    * Mark this article as eligible for the Home page featured subject cards.
    */
-  featureOnHome?: boolean | null;
+  featureOnHome?: boolean | null
   /**
    * Select which core subject area this article should represent on the Home page.
    */
-  homeSubject?: ('Foundations' | 'Principles' | 'Foods' | 'Supplements' | 'Diets' | 'Studies') | null;
+  homeSubject?:
+    | ('Foundations' | 'Principles' | 'Foods' | 'Supplements' | 'Diets' | 'Studies')
+    | null
   /**
    * Image used on the Home page featured subject card.
    */
-  featureImage?: (number | null) | Media;
+  featureImage?: (number | null) | Media
   /**
    * Optional related articles shown in the review sidebar.
    */
-  relatedArticles?: (number | Page)[] | null;
-  updatedAt: string;
-  createdAt: string;
+  relatedArticles?: (number | Page)[] | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "dictionary-entries".
  */
 export interface DictionaryEntry {
-  id: number;
+  id: number
   /**
    * Human-readable dictionary term (for example: Glycemic Index).
    */
-  term: string;
+  term: string
   /**
    * Hashtag-safe slug (for example: glycemic-index). Used by #word links.
    */
-  slug: string;
+  slug: string
   /**
    * Main dictionary definition text shown on the Dictionary page.
    */
-  definition: string;
+  definition: string
   /**
    * Optional article link shown at the bottom of this dictionary entry as "Go to Full Article ->".
    */
-  fullArticle?: (number | null) | Page;
+  fullArticle?: (number | null) | Page
   /**
    * Optional alternate hashtags that should point to this concept in future updates.
    */
   aliases?:
     | {
-        value: string;
-        id?: string | null;
+        value: string
+        id?: string | null
       }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
+    | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number;
-  key: string;
+  id: number
+  key: string
   data:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
+    | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number;
+  id: number
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'users'
+        value: number | User
       } | null)
     | ({
-        relationTo: 'media';
-        value: number | Media;
+        relationTo: 'media'
+        value: number | Media
       } | null)
     | ({
-        relationTo: 'pages';
-        value: number | Page;
+        relationTo: 'tags'
+        value: number | Tag
       } | null)
     | ({
-        relationTo: 'dictionary-entries';
-        value: number | DictionaryEntry;
-      } | null);
-  globalSlug?: string | null;
+        relationTo: 'pages'
+        value: number | Page
+      } | null)
+    | ({
+        relationTo: 'dictionary-entries'
+        value: number | DictionaryEntry
+      } | null)
+  globalSlug?: string | null
   user: {
-    relationTo: 'users';
-    value: number | User;
-  };
-  updatedAt: string;
-  createdAt: string;
+    relationTo: 'users'
+    value: number | User
+  }
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number;
+  id: number
   user: {
-    relationTo: 'users';
-    value: number | User;
-  };
-  key?: string | null;
+    relationTo: 'users'
+    value: number | User
+  }
+  key?: string | null
   value?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
+    | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number;
-  name?: string | null;
-  batch?: number | null;
-  updatedAt: string;
-  createdAt: string;
+  id: number
+  name?: string | null
+  batch?: number | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
+  updatedAt?: T
+  createdAt?: T
+  email?: T
+  resetPasswordToken?: T
+  resetPasswordExpiration?: T
+  salt?: T
+  hash?: T
+  loginAttempts?: T
+  lockUntil?: T
   sessions?:
     | T
     | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
+        id?: T
+        createdAt?: T
+        expiresAt?: T
+      }
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
+  alt?: T
+  updatedAt?: T
+  createdAt?: T
+  url?: T
+  thumbnailURL?: T
+  filename?: T
+  mimeType?: T
+  filesize?: T
+  width?: T
+  height?: T
+  focalX?: T
+  focalY?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
+  name?: T
+  slug?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  category?: T;
-  summary?: T;
-  showArticleRatings?: T;
-  rockRating?: T;
-  scientificEvidence?: T;
-  rockRatingScore?: T;
-  scientificEvidenceScore?: T;
-  heroImage?: T;
-  heroImageCaption?: T;
+  title?: T
+  slug?: T
+  category?: T
+  summary?: T
+  tags?: T
+  showArticleRatings?: T
+  rockRating?: T
+  scientificEvidence?: T
+  rockRatingScore?: T
+  scientificEvidenceScore?: T
+  heroImage?: T
+  heroImageCaption?: T
   sections?:
     | T
     | {
-        heading?: T;
-        headingLevel?: T;
-        body?: T;
-        image?: T;
-        imagePlacement?: T;
-        imageSize?: T;
-        imageWidth?: T;
-        imageCaption?: T;
+        heading?: T
+        headingLevel?: T
+        body?: T
+        image?: T
+        imagePlacement?: T
+        imageSize?: T
+        imageWidth?: T
+        imageCaption?: T
         evidenceGroups?:
           | T
           | {
-              title?: T;
-              intro?: T;
+              title?: T
+              intro?: T
               studies?:
                 | T
                 | {
-                    citation?: T;
-                    studyType?: T;
-                    finding?: T;
-                    link?: T;
-                    id?: T;
-                  };
-              id?: T;
-            };
-        id?: T;
-      };
-  body?: T;
-  isNew?: T;
-  excludeFromRandom?: T;
-  featureOnHome?: T;
-  homeSubject?: T;
-  featureImage?: T;
-  relatedArticles?: T;
-  updatedAt?: T;
-  createdAt?: T;
+                    citation?: T
+                    studyType?: T
+                    finding?: T
+                    link?: T
+                    id?: T
+                  }
+              id?: T
+            }
+        id?: T
+      }
+  body?: T
+  isNew?: T
+  excludeFromRandom?: T
+  featureOnHome?: T
+  homeSubject?: T
+  featureImage?: T
+  relatedArticles?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "dictionary-entries_select".
  */
 export interface DictionaryEntriesSelect<T extends boolean = true> {
-  term?: T;
-  slug?: T;
-  definition?: T;
-  fullArticle?: T;
+  term?: T
+  slug?: T
+  definition?: T
+  fullArticle?: T
   aliases?:
     | T
     | {
-        value?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
+        value?: T
+        id?: T
+      }
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
-  key?: T;
-  data?: T;
+  key?: T
+  data?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
-  document?: T;
-  globalSlug?: T;
-  user?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  document?: T
+  globalSlug?: T
+  user?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences_select".
  */
 export interface PayloadPreferencesSelect<T extends boolean = true> {
-  user?: T;
-  key?: T;
-  value?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  user?: T
+  key?: T
+  value?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations_select".
  */
 export interface PayloadMigrationsSelect<T extends boolean = true> {
-  name?: T;
-  batch?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  name?: T
+  batch?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-navigation".
  */
 export interface SiteNavigation {
-  id: number;
+  id: number
   announcement: {
-    enabled: boolean;
-    text: string;
+    enabled: boolean
+    text: string
     /**
      * Optional link destination for announcement bar. Use # for no navigation.
      */
-    href?: string | null;
-  };
+    href?: string | null
+  }
   navItems: {
-    type: 'link' | 'dropdown';
-    label: string;
+    type: 'link' | 'dropdown'
+    label: string
     /**
      * Top-level link destination.
      */
-    href: string;
+    href: string
     /**
      * Only used for single links (for example, subscribe button).
      */
-    variant?: ('default' | 'button') | null;
+    variant?: ('default' | 'button') | null
     columns?:
       | {
-          title: string;
+          title: string
           links?:
             | {
-                label: string;
-                href: string;
-                id?: string | null;
+                label: string
+                href: string
+                id?: string | null
               }[]
-            | null;
-          id?: string | null;
+            | null
+          id?: string | null
         }[]
-      | null;
-    id?: string | null;
-  }[];
-  updatedAt?: string | null;
-  createdAt?: string | null;
+      | null
+    id?: string | null
+  }[]
+  updatedAt?: string | null
+  createdAt?: string | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "home-page".
  */
 export interface HomePage {
-  id: number;
+  id: number
   about: {
-    eyebrow: string;
-    title: string;
-    description: string;
-  };
+    eyebrow: string
+    title: string
+    description: string
+  }
   /**
    * Choose exactly which article sections appear on the homepage and in what order. No filler cards will be shown for missing items.
    */
   featuredSections?:
     | {
-        eyebrow: string;
-        article: number | Page;
+        eyebrow: string
+        article: number | Page
         /**
          * Optional custom summary for the homepage card. Leave blank to use the article summary.
          */
-        summaryOverride?: string | null;
+        summaryOverride?: string | null
         /**
          * Optional homepage-only image. If blank, the article feature image will be used, then the article hero image.
          */
-        imageOverride?: (number | null) | Media;
+        imageOverride?: (number | null) | Media
         /**
          * Choose which side of the homepage card the image should appear on.
          */
-        imagePlacement?: ('left' | 'right') | null;
+        imagePlacement?: ('left' | 'right') | null
         /**
          * Set the overall visual size of the homepage image area.
          */
-        imageSize?: ('small' | 'medium' | 'large') | null;
+        imageSize?: ('small' | 'medium' | 'large') | null
         /**
          * Control how much horizontal space the image takes within the homepage card.
          */
-        imageWidth?: ('25' | '30' | '35' | '38' | '40' | '45' | '50' | '55' | '60') | null;
-        id?: string | null;
+        imageWidth?: ('25' | '30' | '35' | '38' | '40' | '45' | '50' | '55' | '60') | null
+        id?: string | null
       }[]
-    | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
+    | null
+  updatedAt?: string | null
+  createdAt?: string | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -664,35 +706,35 @@ export interface SiteNavigationSelect<T extends boolean = true> {
   announcement?:
     | T
     | {
-        enabled?: T;
-        text?: T;
-        href?: T;
-      };
+        enabled?: T
+        text?: T
+        href?: T
+      }
   navItems?:
     | T
     | {
-        type?: T;
-        label?: T;
-        href?: T;
-        variant?: T;
+        type?: T
+        label?: T
+        href?: T
+        variant?: T
         columns?:
           | T
           | {
-              title?: T;
+              title?: T
               links?:
                 | T
                 | {
-                    label?: T;
-                    href?: T;
-                    id?: T;
-                  };
-              id?: T;
-            };
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
+                    label?: T
+                    href?: T
+                    id?: T
+                  }
+              id?: T
+            }
+        id?: T
+      }
+  updatedAt?: T
+  createdAt?: T
+  globalType?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -702,34 +744,33 @@ export interface HomePageSelect<T extends boolean = true> {
   about?:
     | T
     | {
-        eyebrow?: T;
-        title?: T;
-        description?: T;
-      };
+        eyebrow?: T
+        title?: T
+        description?: T
+      }
   featuredSections?:
     | T
     | {
-        eyebrow?: T;
-        article?: T;
-        summaryOverride?: T;
-        imageOverride?: T;
-        imagePlacement?: T;
-        imageSize?: T;
-        imageWidth?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
+        eyebrow?: T
+        article?: T
+        summaryOverride?: T
+        imageOverride?: T
+        imagePlacement?: T
+        imageSize?: T
+        imageWidth?: T
+        id?: T
+      }
+  updatedAt?: T
+  createdAt?: T
+  globalType?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {
-  [k: string]: unknown;
+  [k: string]: unknown
 }
-
 
 declare module 'payload' {
   export interface GeneratedTypes extends Config {}

@@ -8,6 +8,7 @@ import sharp from 'sharp'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
+import { Tags } from './collections/Tags'
 import { DictionaryEntries } from './collections/DictionaryEntries'
 import { SiteNavigation } from './globals/SiteNavigation'
 import { HomePage } from './globals/HomePage'
@@ -34,7 +35,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Users, Media, Pages, DictionaryEntries],
+  collections: [Users, Media, Tags, Pages, DictionaryEntries],
   globals: [SiteNavigation, HomePage],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

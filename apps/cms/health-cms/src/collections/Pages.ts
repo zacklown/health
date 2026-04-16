@@ -282,6 +282,16 @@ export const Pages: CollectionConfig = {
       required: true,
     },
     {
+      name: 'tags',
+      type: 'relationship',
+      relationTo: 'tags',
+      hasMany: true,
+      admin: {
+        description:
+          'Select from previously used tags or create a new tag from the relation drawer.',
+      },
+    },
+    {
       type: 'row',
       fields: [
         {
@@ -448,7 +458,8 @@ export const Pages: CollectionConfig = {
         { label: 'Studies', value: 'Studies' },
       ],
       admin: {
-        description: 'Select which core subject area this article should represent on the Home page.',
+        description:
+          'Select which core subject area this article should represent on the Home page.',
         condition: (_, siblingData) => Boolean(siblingData?.featureOnHome),
       },
     },

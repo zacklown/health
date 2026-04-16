@@ -72,7 +72,8 @@ export const DictionaryEntries: CollectionConfig = {
       name: 'aliases',
       type: 'array',
       admin: {
-        description: 'Optional alternate hashtags that should point to this concept in future updates.',
+        description:
+          'Optional alternate hashtags that should point to this concept in future updates.',
       },
       fields: [
         {

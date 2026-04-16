@@ -10,6 +10,12 @@ type RelatedArticle = {
 	title?: string;
 };
 
+type TagItem = {
+	tag?: string | null;
+	name?: string | null;
+	slug?: string | null;
+};
+
 type CmsMedia = {
 	url?: string | null;
 	alt?: string | null;
@@ -45,6 +51,7 @@ type CmsPage = {
 	slug: string;
 	category?: string;
 	summary?: string;
+	tags?: TagItem[] | null;
 	showArticleRatings?: boolean | null;
 	rockRating?: string | null;
 	scientificEvidence?: string | null;
@@ -156,6 +163,37 @@ function normalizeRelatedArticles(page: CmsPage | null): RelatedArticle[] {
 	return results;
 }
 
+function normalizeTags(tags: TagItem[] | null | undefined): string[] {
+	if (!Array.isArray(tags)) return [];
+
+	const seen = new Set<string>();
+	const normalized: string[] = [];
+
+	for (const entry of tags) {
+		const tag =
+			typeof entry?.name === 'string' && entry.name.trim()
+				? entry.name.trim()
+				: typeof entry?.tag === 'string'
+					? entry.tag.trim()
+					: '';
+		if (!tag) continue;
+
+		const key = tag.toLowerCase();
+		if (seen.has(key)) continue;
+		seen.add(key);
+		normalized.push(tag);
+	}
+
+	return normalized;
+}
+
+function splitTags(tags: string[], visibleCount = 3): { visible: string[]; hidden: string[] } {
+	return {
+		visible: tags.slice(0, visibleCount),
+		hidden: tags.slice(visibleCount),
+	};
+}
+
 async function fetchPageBySlug(slug: string): Promise<CmsPage | null> {
 	for (const baseUrl of cmsBaseUrls) {
 		try {
@@ -188,6 +226,9 @@ const scientificEvidenceLabel = showArticleRatings
 	? getSelectLabel(page?.scientificEvidence, scientificEvidenceLabels)
 	: null;
 const relatedArticles = normalizeRelatedArticles(page);
+const tags = normalizeTags(page?.tags);
+const tagDisplay = splitTags(tags);
+const articleTagDialogId = page?.slug ? `article-tags-dialog-${page.slug}` : 'article-tags-dialog';
 ---
 
 <Layout
@@ -244,6 +285,39 @@ const relatedArticles = normalizeRelatedArticles(page);
 									)}
 									{scientificEvidenceLabel && (
 										<p><strong>Scientific Evidence:</strong> {scientificEvidenceLabel}</p>
+									)}
+								</div>
+							)}
+							{tags.length > 0 && (
+								<div class="tag-group">
+									<ul class="article-tags" aria-label="Article tags">
+										{tagDisplay.visible.map((tag) => (
+											<li>{tag}</li>
+										))}
+										{tagDisplay.hidden.length > 0 && (
+											<li class="article-tags__more">
+												<button type="button" class="tag-more-button" data-tag-dialog-trigger={articleTagDialogId}>
+													More &gt;
+												</button>
+											</li>
+										)}
+									</ul>
+									{tagDisplay.hidden.length > 0 && (
+										<dialog class="tag-dialog" data-tag-dialog={articleTagDialogId} aria-label="Additional article tags">
+											<div class="tag-dialog__card">
+												<div class="tag-dialog__header">
+													<h2>More Tags</h2>
+													<button type="button" class="tag-dialog__close" data-tag-dialog-close={articleTagDialogId}>
+														Close
+													</button>
+												</div>
+												<ul class="tag-dialog__list">
+													{tagDisplay.hidden.map((tag) => (
+														<li>{tag}</li>
+													))}
+												</ul>
+											</div>
+										</dialog>
 									)}
 								</div>
 							)}
@@ -406,6 +480,51 @@ const relatedArticles = normalizeRelatedArticles(page);
 		const firstHeadingId = headingNodes[0].id;
 		if (firstHeadingId) setActiveToc(firstHeadingId);
 	}
+
+	const tagDialogTriggers = Array.from(document.querySelectorAll('[data-tag-dialog-trigger]'));
+
+	tagDialogTriggers.forEach((trigger) => {
+		if (!(trigger instanceof HTMLButtonElement)) return;
+		const dialogId = trigger.dataset.tagDialogTrigger;
+		if (!dialogId) return;
+		const dialog = document.querySelector(`[data-tag-dialog="${dialogId}"]`);
+		if (!(dialog instanceof HTMLDialogElement)) return;
+
+		trigger.addEventListener('click', () => {
+			dialog.showModal();
+		});
+	});
+
+	const tagDialogCloseButtons = Array.from(document.querySelectorAll('[data-tag-dialog-close]'));
+
+	tagDialogCloseButtons.forEach((button) => {
+		if (!(button instanceof HTMLButtonElement)) return;
+		const dialogId = button.dataset.tagDialogClose;
+		if (!dialogId) return;
+		const dialog = document.querySelector(`[data-tag-dialog="${dialogId}"]`);
+		if (!(dialog instanceof HTMLDialogElement)) return;
+
+		button.addEventListener('click', () => {
+			dialog.close();
+		});
+	});
+
+	const tagDialogs = Array.from(document.querySelectorAll('[data-tag-dialog]'));
+
+	tagDialogs.forEach((dialog) => {
+		if (!(dialog instanceof HTMLDialogElement)) return;
+
+		dialog.addEventListener('click', (event) => {
+			const bounds = dialog.getBoundingClientRect();
+			const clickedInside =
+				event.clientX >= bounds.left &&
+				event.clientX <= bounds.right &&
+				event.clientY >= bounds.top &&
+				event.clientY <= bounds.bottom;
+
+			if (!clickedInside) dialog.close();
+		});
+	});
 </script>
 
 <style>
@@ -559,6 +678,121 @@ const relatedArticles = normalizeRelatedArticles(page);
 		font-size: 1.05rem;
 		line-height: 1.7;
 		color: color-mix(in oklab, var(--color-text) 88%, white);
+	}
+
+	.article-tags {
+		list-style: none;
+		display: flex;
+		flex-wrap: nowrap;
+		gap: 0.55rem;
+		margin: -0.1rem 0 0;
+		padding: 0;
+		overflow: hidden;
+	}
+
+	.article-tags li {
+		flex: 0 0 auto;
+		margin: 0;
+		padding: 0.38rem 0.72rem;
+		border: 1px solid color-mix(in oklab, var(--color-accent) 28%, var(--color-border));
+		background: color-mix(in oklab, var(--color-accent) 10%, var(--color-surface));
+		color: color-mix(in oklab, var(--color-text) 88%, var(--color-accent));
+		font-size: 0.8rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.article-tags__more {
+		padding: 0;
+		border: 0;
+		background: transparent;
+	}
+
+	.tag-more-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.16rem 0.1rem;
+		border: 0;
+		background: transparent;
+		color: var(--color-accent);
+		font: inherit;
+		font-size: 0.8rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		cursor: pointer;
+	}
+
+	.tag-more-button:hover {
+		color: var(--color-accent-hover);
+		text-decoration: underline;
+	}
+
+	.tag-dialog {
+		border: 0;
+		padding: 0;
+		background: transparent;
+		max-width: min(34rem, calc(100vw - 2rem));
+		width: 100%;
+	}
+
+	.tag-dialog::backdrop {
+		background: rgba(12, 18, 25, 0.58);
+	}
+
+	.tag-dialog__card {
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		padding: 1rem;
+		box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.2);
+	}
+
+	.tag-dialog__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 0.85rem;
+	}
+
+	.tag-dialog__header h2 {
+		margin: 0;
+		font-size: 1rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--color-muted);
+	}
+
+	.tag-dialog__close {
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		padding: 0.45rem 0.75rem;
+		color: var(--color-text);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.tag-dialog__list {
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.55rem;
+		margin: 0;
+		padding: 0;
+	}
+
+	.tag-dialog__list li {
+		margin: 0;
+		padding: 0.4rem 0.74rem;
+		border: 1px solid color-mix(in oklab, var(--color-accent) 28%, var(--color-border));
+		background: color-mix(in oklab, var(--color-accent) 10%, var(--color-surface));
+		color: color-mix(in oklab, var(--color-text) 88%, var(--color-accent));
+		font-size: 0.8rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 	}
 
 	.body {

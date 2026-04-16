@@ -58,7 +58,8 @@ export const HomePage: GlobalConfig = {
           name: 'summaryOverride',
           type: 'textarea',
           admin: {
-            description: 'Optional custom summary for the homepage card. Leave blank to use the article summary.',
+            description:
+              'Optional custom summary for the homepage card. Leave blank to use the article summary.',
           },
         },
         {
@@ -156,7 +157,8 @@ export const HomePage: GlobalConfig = {
             },
           ],
           admin: {
-            description: 'Control how much horizontal space the image takes within the homepage card.',
+            description:
+              'Control how much horizontal space the image takes within the homepage card.',
           },
         },
       ],

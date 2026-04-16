@@ -10,11 +10,18 @@ type CmsMedia = {
 	alt?: string;
 };
 
+type TagItem = {
+	tag?: string | null;
+	name?: string | null;
+	slug?: string | null;
+};
+
 type RelatedPage = {
 	title?: string;
 	slug?: string;
 	summary?: string;
 	category?: string;
+	tags?: TagItem[] | null;
 	isNew?: boolean | null;
 	updatedAt?: string;
 	createdAt?: string;
@@ -27,6 +34,7 @@ type FeaturedSection = {
 	title: string;
 	slug: string;
 	summary: string;
+	tags: string[];
 	imageUrl?: string;
 	imageAlt?: string;
 	imagePlacement: 'left' | 'right';
@@ -45,8 +53,8 @@ type NewArticleCard = {
 	slug: string;
 	summary: string;
 	previewSummary: string;
-	hasExpandableSummary: boolean;
 	category: string;
+	tags: string[];
 	updatedLabel: string;
 	imageUrl?: string;
 	imageAlt?: string;
@@ -93,20 +101,37 @@ function resolveFeaturedMedia(...sources: unknown[]): { imageUrl?: string; image
 	return {};
 }
 
-function buildSummaryPreview(summary: string): { previewSummary: string; hasExpandableSummary: boolean } {
-	const normalizedSummary = summary.trim();
-	const estimatedTwoLineLimit = 18;
-	const wordCount = normalizedSummary.split(/\s+/).filter(Boolean).length;
-	if (wordCount <= estimatedTwoLineLimit && normalizedSummary.length <= 150) {
-		return {
-			previewSummary: normalizedSummary,
-			hasExpandableSummary: false,
-		};
+function normalizeTags(tags: TagItem[] | null | undefined): string[] {
+	if (!Array.isArray(tags)) return [];
+
+	const seen = new Set<string>();
+	const normalized: string[] = [];
+
+	for (const entry of tags) {
+		const tag = getStringValue(entry?.name) || getStringValue(entry?.tag);
+		if (!tag) continue;
+
+		const key = tag.toLowerCase();
+		if (seen.has(key)) continue;
+		seen.add(key);
+		normalized.push(tag);
 	}
+
+	return normalized;
+}
+
+function splitTags(tags: string[], visibleCount = 3): { visible: string[]; hidden: string[] } {
+	return {
+		visible: tags.slice(0, visibleCount),
+		hidden: tags.slice(visibleCount),
+	};
+}
+
+function buildSummaryPreview(summary: string): { previewSummary: string } {
+	const normalizedSummary = summary.trim();
 
 	return {
 		previewSummary: normalizedSummary,
-		hasExpandableSummary: true,
 	};
 }
 
@@ -137,6 +162,7 @@ function buildFeaturedSection(raw: any): FeaturedSection | null {
 			getStringValue(raw.summaryOverride) ||
 			getStringValue(article?.summary) ||
 			'Open this article to read the full breakdown, references, and practical notes.',
+		tags: normalizeTags(article?.tags),
 		imagePlacement,
 		imageSize,
 		imageWidth,
@@ -201,6 +227,7 @@ async function fetchNewArticles(): Promise<NewArticleCard[]> {
 						slug: getStringValue(article.slug) || '',
 						summary,
 						category: getStringValue(article.category) || 'General',
+						tags: normalizeTags(article.tags),
 						updatedLabel: new Date(article.updatedAt || article.createdAt || Date.now()).toLocaleDateString(),
 						...summaryPreview,
 						...media,
@@ -259,7 +286,11 @@ const newArticles = await fetchNewArticles();
 					</div>
 					<div class="new-carousel__viewport">
 						<div class="new-carousel__track">
-							{newArticles.map((article) => (
+							{newArticles.map((article, index) => {
+								const tagDisplay = splitTags(article.tags);
+								const dialogId = `new-card-tags-${index}`;
+
+								return (
 								<article class="new-carousel__card">
 									<div class="new-carousel__media">
 										{article.imageUrl ? (
@@ -278,23 +309,55 @@ const newArticles = await fetchNewArticles();
 											<span>{article.updatedLabel}</span>
 										</p>
 										<h3>{article.title}</h3>
-										<p class="new-carousel__summary-preview">{article.previewSummary}</p>
-										{article.hasExpandableSummary && (
-											<details class="new-carousel__summary-details">
-												<summary>More</summary>
-												<p>{article.summary}</p>
-											</details>
+										{article.tags.length > 0 && (
+											<div class="tag-group">
+											<ul class="tag-list" aria-label="Article tags">
+												{tagDisplay.visible.map((tag) => (
+													<li>{tag}</li>
+												))}
+												{tagDisplay.hidden.length > 0 && (
+													<li class="tag-list__more">
+														<button type="button" class="tag-more-button" data-tag-dialog-trigger={dialogId}>
+															More &gt;
+														</button>
+													</li>
+												)}
+											</ul>
+											{tagDisplay.hidden.length > 0 && (
+												<dialog class="tag-dialog" data-tag-dialog={dialogId} aria-label="Additional article tags">
+													<div class="tag-dialog__card">
+														<div class="tag-dialog__header">
+															<h2>More Tags</h2>
+															<button type="button" class="tag-dialog__close" data-tag-dialog-close={dialogId}>
+																Close
+															</button>
+														</div>
+														<ul class="tag-dialog__list">
+															{tagDisplay.hidden.map((tag) => (
+																<li>{tag}</li>
+															))}
+														</ul>
+													</div>
+												</dialog>
+											)}
+											</div>
 										)}
+										<p class="new-carousel__summary-preview">{article.previewSummary}</p>
 										<a class="read-button" href={`/${encodeURIComponent(article.slug)}`}>Read Article</a>
 									</div>
 								</article>
-							))}
+								);
+							})}
 						</div>
 					</div>
 				</section>
 			)}
 
-			{featuredSections.map((section) => (
+			{featuredSections.map((section, index) => {
+				const tagDisplay = splitTags(section.tags);
+				const dialogId = `featured-tags-${index}`;
+
+				return (
 				<section
 					class={`block subject-card subject-card--${section.imagePlacement} subject-card--${section.imageSize}`}
 					style={`--home-image-width: ${section.imageWidth}%;`}
@@ -302,6 +365,39 @@ const newArticles = await fetchNewArticles();
 					<div class="subject-card__content">
 						<p class="eyebrow">{section.eyebrow}</p>
 						<h2>{section.title}</h2>
+						{section.tags.length > 0 && (
+							<div class="tag-group">
+							<ul class="tag-list" aria-label="Article tags">
+								{tagDisplay.visible.map((tag) => (
+									<li>{tag}</li>
+								))}
+								{tagDisplay.hidden.length > 0 && (
+									<li class="tag-list__more">
+										<button type="button" class="tag-more-button" data-tag-dialog-trigger={dialogId}>
+											More &gt;
+										</button>
+									</li>
+								)}
+							</ul>
+							{tagDisplay.hidden.length > 0 && (
+								<dialog class="tag-dialog" data-tag-dialog={dialogId} aria-label="Additional article tags">
+									<div class="tag-dialog__card">
+										<div class="tag-dialog__header">
+											<h2>More Tags</h2>
+											<button type="button" class="tag-dialog__close" data-tag-dialog-close={dialogId}>
+												Close
+											</button>
+										</div>
+										<ul class="tag-dialog__list">
+											{tagDisplay.hidden.map((tag) => (
+												<li>{tag}</li>
+											))}
+										</ul>
+									</div>
+								</dialog>
+							)}
+							</div>
+						)}
 						<p>{section.summary}</p>
 						<a class="read-button" href={`/${encodeURIComponent(section.slug)}`}>Read Article</a>
 					</div>
@@ -317,7 +413,8 @@ const newArticles = await fetchNewArticles();
 						)}
 					</div>
 				</section>
-			))}
+				);
+			})}
 		</main>
 	</div>
 </Layout>
@@ -369,6 +466,51 @@ const newArticles = await fetchNewArticles();
 		window.addEventListener('resize', updateCarousel);
 		updateCarousel();
 	}
+
+	const tagDialogTriggers = Array.from(document.querySelectorAll('[data-tag-dialog-trigger]'));
+
+	tagDialogTriggers.forEach((trigger) => {
+		if (!(trigger instanceof HTMLButtonElement)) return;
+		const dialogId = trigger.dataset.tagDialogTrigger;
+		if (!dialogId) return;
+		const dialog = document.querySelector(`[data-tag-dialog="${dialogId}"]`);
+		if (!(dialog instanceof HTMLDialogElement)) return;
+
+		trigger.addEventListener('click', () => {
+			dialog.showModal();
+		});
+	});
+
+	const tagDialogCloseButtons = Array.from(document.querySelectorAll('[data-tag-dialog-close]'));
+
+	tagDialogCloseButtons.forEach((button) => {
+		if (!(button instanceof HTMLButtonElement)) return;
+		const dialogId = button.dataset.tagDialogClose;
+		if (!dialogId) return;
+		const dialog = document.querySelector(`[data-tag-dialog="${dialogId}"]`);
+		if (!(dialog instanceof HTMLDialogElement)) return;
+
+		button.addEventListener('click', () => {
+			dialog.close();
+		});
+	});
+
+	const tagDialogs = Array.from(document.querySelectorAll('[data-tag-dialog]'));
+
+	tagDialogs.forEach((dialog) => {
+		if (!(dialog instanceof HTMLDialogElement)) return;
+
+		dialog.addEventListener('click', (event) => {
+			const bounds = dialog.getBoundingClientRect();
+			const clickedInside =
+				event.clientX >= bounds.left &&
+				event.clientX <= bounds.right &&
+				event.clientY >= bounds.top &&
+				event.clientY <= bounds.bottom;
+
+			if (!clickedInside) dialog.close();
+		});
+	});
 </script>
 
 <style>
@@ -558,12 +700,16 @@ const newArticles = await fetchNewArticles();
 
 	.new-carousel__track {
 		display: flex;
+		align-items: stretch;
 		transition: transform 260ms ease;
 		will-change: transform;
 	}
 
 	.new-carousel__card {
+		display: flex;
+		flex-direction: column;
 		flex: 0 0 calc(100% / 3);
+		height: 100%;
 		min-width: 0;
 		padding-right: 1rem;
 		box-sizing: border-box;
@@ -605,8 +751,10 @@ const newArticles = await fetchNewArticles();
 	}
 
 	.new-carousel__body {
-		display: grid;
-		gap: 0.7rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.18rem;
+		flex: 1 1 auto;
 		padding-top: 0.85rem;
 	}
 
@@ -614,7 +762,7 @@ const newArticles = await fetchNewArticles();
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.6rem;
-		margin: 0;
+		margin: 0 0 0.28rem;
 		font-size: 0.78rem;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -622,40 +770,151 @@ const newArticles = await fetchNewArticles();
 	}
 
 	.new-carousel__body h3 {
-		margin: 0;
+		margin: 0 0 0.08rem;
 		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
 		font-size: clamp(1.15rem, 2vw, 1.45rem);
+		line-height: 1.3;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 
 	.new-carousel__summary-preview {
-		margin: 0;
+		margin: 0.32rem 0 0;
 		color: var(--muted);
 		line-height: 1.56;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
+		min-height: calc(1.56em * 2);
 	}
 
-	.new-carousel__summary-details {
-		margin: -0.15rem 0 0;
+	.new-carousel__body .read-button {
+		margin-top: auto;
+		align-self: start;
 	}
 
-	.new-carousel__summary-details summary {
-		cursor: pointer;
-		color: var(--accent);
-		font-weight: 700;
+	.new-carousel__body .tag-group {
+		margin-top: 0;
+	}
+
+	.tag-list {
 		list-style: none;
+		display: flex;
+		flex-wrap: nowrap;
+		gap: 0.45rem;
+		margin: 0;
+		padding: 0;
+		min-height: 1.75rem;
+		overflow: hidden;
+		white-space: nowrap;
 	}
 
-	.new-carousel__summary-details summary::-webkit-details-marker {
-		display: none;
+	.tag-list li {
+		flex: 0 0 auto;
+		margin: 0;
+		padding: 0.34rem 0.65rem;
+		border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--line));
+		background: color-mix(in oklab, var(--accent) 10%, var(--card));
+		color: color-mix(in oklab, var(--ink) 88%, var(--accent));
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
 	}
 
-	.new-carousel__summary-details p {
-		margin: 0.55rem 0 0;
+	.tag-list__more {
+		padding: 0;
+		border: 0;
+		background: transparent;
+	}
+
+	.tag-more-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.16rem 0.1rem;
+		border: 0;
+		background: transparent;
+		color: var(--accent);
+		font: inherit;
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		cursor: pointer;
+	}
+
+	.tag-more-button:hover {
+		color: var(--accent-hover);
+		text-decoration: underline;
+	}
+
+	.tag-dialog {
+		border: 0;
+		padding: 0;
+		background: transparent;
+		max-width: min(34rem, calc(100vw - 2rem));
+		width: 100%;
+	}
+
+	.tag-dialog::backdrop {
+		background: rgba(12, 18, 25, 0.58);
+	}
+
+	.tag-dialog__card {
+		border: 1px solid var(--line);
+		background: var(--card);
+		padding: 1rem;
+		box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.2);
+	}
+
+	.tag-dialog__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 0.85rem;
+	}
+
+	.tag-dialog__header h2 {
+		margin: 0;
+		font-size: 1rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
 		color: var(--muted);
-		line-height: 1.56;
+	}
+
+	.tag-dialog__close {
+		border: 1px solid var(--line);
+		background: var(--card);
+		padding: 0.45rem 0.75rem;
+		color: var(--ink);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.tag-dialog__list {
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.55rem;
+		margin: 0;
+		padding: 0;
+	}
+
+	.tag-dialog__list li {
+		margin: 0;
+		padding: 0.4rem 0.74rem;
+		border: 1px solid color-mix(in oklab, var(--accent) 24%, var(--line));
+		background: color-mix(in oklab, var(--accent) 10%, var(--card));
+		color: color-mix(in oklab, var(--ink) 88%, var(--accent));
+		font-size: 0.8rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 	}
 
 	.subject-card {
@@ -693,6 +952,12 @@ const newArticles = await fetchNewArticles();
 		margin: 0;
 		font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', serif;
 		font-size: clamp(1.3rem, 2.5vw, 1.9rem);
+		line-height: 1.3;
+		min-height: calc(1.3em * 3);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 
 	.subject-card__content p {

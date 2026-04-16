@@ -17,15 +17,22 @@ export default async function HomePage() {
     <div className="home">
       <div className="content">
         <picture>
-          <Image
-            alt="Metadata Logo"
-            height={65}
-            src="/metadata-logo.png"
-            width={180}
-          />
+          <Image alt="Metadata Logo" height={65} src="/metadata-logo.png" width={180} />
         </picture>
-        {!user && (<h1>Welcome to Health CMS.<br />This is the {label} CMS!</h1>)}
-        {user && (<h1>Welcome back, {user.email}.<br /><br />This is the {label} CMS!</h1>)}
+        {!user && (
+          <h1>
+            Welcome to Health CMS.
+            <br />
+            This is the {label} CMS!
+          </h1>
+        )}
+        {user && (
+          <h1>
+            Welcome back, {user.email}.<br />
+            <br />
+            This is the {label} CMS!
+          </h1>
+        )}
         <div className="links">
           <a
             className="admin"
