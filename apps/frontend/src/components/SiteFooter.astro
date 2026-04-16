@@ -70,8 +70,8 @@ const footerSections = [
   .wf-footer {
     margin-top: 3rem;
     border-top: 1px solid var(--color-border);
-    background: var(--color-inverse-bg);
-    color: var(--color-inverse-text);
+    background: var(--color-surface-alt);
+    color: var(--color-text);
   }
 
   .wf-footer-shell {
@@ -88,7 +88,7 @@ const footerSections = [
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
-    color: #f4f9ff;
+    color: var(--color-text);
     text-decoration: none;
     font-weight: 700;
   }
@@ -105,7 +105,6 @@ const footerSections = [
     width: 118px;
     height: 28px;
     display: block;
-    filter: brightness(0) invert(1);
   }
 
   .wf-footer-brand-text {
@@ -121,7 +120,7 @@ const footerSections = [
 
   .wf-footer-col p {
     margin: 0 0 0.45rem;
-    color: var(--color-inverse-text);
+    color: var(--color-text);
     font-size: 0.76rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -137,19 +136,19 @@ const footerSections = [
   }
 
   .wf-footer-col a {
-    color: var(--color-inverse-text);
+    color: var(--color-text);
     font-size: 0.9rem;
     text-decoration: none;
   }
 
   .wf-footer-col a:hover {
-    color: #ffffff;
+    color: var(--color-accent);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 
   .wf-footer-bottom {
-    border-top: 1px solid rgba(148, 163, 184, 0.3);
+    border-top: 1px solid var(--color-border);
     padding: 0.85rem 1rem 1.1rem;
     display: flex;
     justify-content: space-between;
@@ -159,6 +158,12 @@ const footerSections = [
     margin: 0 auto;
     color: var(--color-muted);
     font-size: 0.86rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .wf-footer-logo {
+      filter: brightness(0) invert(1);
+    }
   }
 
   @media (max-width: 860px) {
