@@ -13,6 +13,11 @@ docker network create health-db >/dev/null 2>&1 || true
 
 (
   cd "$BASE_DIR"
+  ./scripts/run-db-migrations.sh
+)
+
+(
+  cd "$BASE_DIR"
   docker compose up -d
 )
 

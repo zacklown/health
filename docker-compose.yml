@@ -2,8 +2,10 @@ services:
   cms:
     build: .
     working_dir: /app/apps/cms/health-cms
-    command: bash -lc "pnpm run build && pnpm run start"
+    command: bash -lc "if [ -d src/migrations ]; then pnpm payload migrate; fi; pnpm run build && pnpm run start"
     restart: always
+    volumes:
+      - ./apps/cms/health-cms/media:/app/apps/cms/health-cms/media
     ports:
       - '3000:3000'
     env_file:
